@@ -5,7 +5,7 @@
 // - filters samples according to the FAM file given via --fam.
 // Creates new VCF/GZ sets.
 process prefilter {
-    tag "${params.collection_name}.${chrom}"
+    tag "${params.collection_name}"
     label "prefilter"
 	scratch params.scratch
 

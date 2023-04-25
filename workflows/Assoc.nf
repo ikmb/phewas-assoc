@@ -48,8 +48,14 @@ workflow assoc{
     	def match = get_file_details(it)
     	[it, match[1]] }
 
+	if(params.fam){
+		ch_fam_pheno = Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"}
+	}else{
+		ch_fam_pheno = Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile file, please specify at least one of '--phenofile' or '--fam' in your pipeline call"}
+	}
+
 	prefilter( for_saige_imp,
-				Channel.fromPath(params.fam) )
+				ch_fam_pheno )
 
 	ch_mapped_prefilter = prefilter.out.map { it -> [it[0], it[1], get_chromosome_code(it[0]), it[2]] }
 
@@ -60,7 +66,7 @@ workflow assoc{
 	merge_r2( gen_r2_list.out.collect() )
 
 	make_plink ( ch_mapped_prefilter,
-				 Channel.fromPath(params.fam) )
+				 ch_fam_pheno )
 
 	merge_plink ( make_plink.out.collect() )
 
@@ -75,25 +81,33 @@ workflow assoc{
 	generate_pcs( prune.out )
 
 	make_covars( generate_pcs.out,
-					   Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"} )
+				 ch_fam_pheno )
 
 //REGENIE
 	if(!params.disable_regenie){
 		if(params.phenofile){
+			//TODO: completely remove fam file requirement if phenofile is given
 			//TODO: check if phenofile exist
 			//ch_pheno = Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"}
 			split_input_phenofile( Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"} )
-			ch_pheno = split_input_phenofile.out.flatten().view()
+			ch_pheno = split_input_phenofile.out.flatten()
 		}else{
 			phenofile_from_fam( Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"} )
 			ch_pheno = phenofile_from_fam.out
 		}
+//TODO: Implement to remove missing phenotypes for each run separately:
+		if(!params.remove_missing_phenotypes){
+			ch_regenie_plink = merge_plink.out
+		}else{
+			ch_regenie_plink = merge_plink.out
+		}
+
 		//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
 		regenie_step1( prune.out,
 					   make_covars.out.covars,
 					   ch_pheno )
 
-		regenie_step2( merge_plink.out,
+		regenie_step2( ch_regenie_plink,
 					   make_covars.out.covars,
 					   regenie_step1.out,
 					   ch_pheno )

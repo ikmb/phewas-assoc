@@ -135,7 +135,8 @@ regenie \
   --bed tmp \
   --threads !{task.cpus} \
   --covarFile !{covars} \
-  --covarCol PC{1:!{params.pca_dims}} \
+  --covarCol $(cat !{covars_cols})
+  #--covarCol PC{1:!{params.pca_dims}} \
   --phenoFile !{phenofile} \
   --bsize 200 \
   $TRAIT_ARGS \

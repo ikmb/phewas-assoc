@@ -36,7 +36,7 @@ The following list covers all parameters that may be specified for the Associati
 --fam [file.fam]                [REQUIRED] A Plink-style FAM file that will be used to select a
                                     subset of samples from the provided VCFs
 
---trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'.
+--trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case.
 --collection_name [name]        [ADVISED] Output filename prefix
 --output [directory]            [ADVISED] Output directory
 --more_covars [covars.txt]      [OPTIONAL] whitespace-separated list of covariates. See above.
