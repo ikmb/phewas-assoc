@@ -56,11 +56,9 @@ process regenie_step1 {
     label 'regenie'
 
     input:
-        tuple path(bed), path(bim), path(fam), path(logfile)
-        tuple path(covars), path(covars_cols)
-        path(phenofile)
+        tuple path(bed), path(bim), path(fam), path(logfile), path(covars), path(covars_cols), path(phenofile)
     output:
-        tuple path('fit_bin_out_*.loco*'), path('fit_bin_out_pred.list')
+        tuple path('fit_bin_out_*.loco*'), path('fit_bin_out_pred.list'), path(covars), path(covars_cols), path(phenofile)
    	
     shell:
     '''
@@ -107,10 +105,7 @@ process regenie_step2 {
 
 
     input:
-        tuple path(bed), path(bim), path(fam), path(logfile)
-        tuple path(covars), path(covars_cols)
-        tuple path(locofiles), path(predlist)
-        path(phenofile)
+        tuple path(bed), path(bim), path(fam), path(logfile), path(locofiles), path(predlist), path(covars), path(covars_cols), path(phenofile)
     output:
         path("${params.collection_name}_regenie_firth*")
     shell:
@@ -135,8 +130,7 @@ regenie \
   --bed tmp \
   --threads !{task.cpus} \
   --covarFile !{covars} \
-  --covarCol $(cat !{covars_cols})
-  #--covarCol PC{1:!{params.pca_dims}} \
+  --covarCol $(cat !{covars_cols}) \
   --phenoFile !{phenofile} \
   --bsize 200 \
   $TRAIT_ARGS \
@@ -149,3 +143,4 @@ regenie \
   --gz
 '''
 }
+//#--covarCol PC{1:!{params.pca_dims}} \

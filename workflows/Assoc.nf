@@ -48,6 +48,8 @@ workflow assoc{
     	def match = get_file_details(it)
     	[it, match[1]] }
 
+
+	//TODO: Check for sanity of phenofile or fam file regarding phenotypes
 	if(params.fam){
 		ch_fam_pheno = Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"}
 	}else{
@@ -102,14 +104,11 @@ workflow assoc{
 			ch_regenie_plink = merge_plink.out
 		}
 
+		ch_regenie1_input = prune.out.combine(make_covars.out.covars).combine(ch_pheno)
 		//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
-		regenie_step1( prune.out,
-					   make_covars.out.covars,
-					   ch_pheno )
+		regenie_step1( ch_regenie1_input )
 
-		regenie_step2( ch_regenie_plink,
-					   make_covars.out.covars,
-					   regenie_step1.out,
-					   ch_pheno )
+		ch_regenie2_input = ch_regenie_plink.combine(regenie_step1.out)
+		regenie_step2( ch_regenie2_input )
 	}
 }

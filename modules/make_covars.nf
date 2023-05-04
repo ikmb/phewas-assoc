@@ -10,7 +10,7 @@ process make_covars {
     output:
     tuple path("${params.collection_name}.covars"), path("${params.collection_name}.covar_cols"), emit: covars/// into for_saige_null_covars, for_merge_sumstats_covars, for_plink_covars
     //path("${params.collection_name}.double-id.fam"), emit: plink_fam// into for_plink_fam
-	tuple path("${params.collection_name}.covars"), path("${params.collection_name}.covar_cols"), path("${params.collection_name}.double-id.fam"), emit: for_plink
+	//tuple path("${params.collection_name}.covars"), path("${params.collection_name}.covar_cols"), path("${params.collection_name}.double-id.fam"), emit: for_plink
 
     shell:
 '''
