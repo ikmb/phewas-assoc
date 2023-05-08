@@ -37,12 +37,13 @@ The following list covers all parameters that may be specified for the Associati
                                     subset of samples from the provided VCFs
 
 --trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case.
+--test [type]                   [ADVISED] Test algorithm. May be 'firth' (default) or 'spa'.
 --collection_name [name]        [ADVISED] Output filename prefix
 --output [directory]            [ADVISED] Output directory
 --more_covars [covars.txt]      [OPTIONAL] whitespace-separated list of covariates. See above.
 --more_covars_cols [COL1,COL2]  [OPTIONAL] comma-separated list of covar column header names
 --null_filter [filter]          [OPTIONAL] bcftools-style formatted INFO filter for generation of
-                                    the SAIGE null model. Default: "R2>0.8"
+                                    the null model. Default: "R2>0.8"
 -resume                         [OPTIONAL] Restart where the pipeline was cancelled or aborted. May or may
                                     not work, depending on your filesystem specifics
 

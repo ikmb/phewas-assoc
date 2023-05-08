@@ -107,9 +107,9 @@ process regenie_step2 {
     input:
         tuple path(bed), path(bim), path(fam), path(logfile), path(locofiles), path(predlist), path(covars), path(covars_cols), path(phenofile)
     output:
-        path("${params.collection_name}_regenie_firth*")
+        path("${params.collection_name}_regenie_${params.test}*")
     shell:
-        outprefix = params.collection_name + '_regenie_firth'
+        outprefix = params.collection_name + '_regenie_' + params.test
 '''
 if [ "!{params.trait}" == "binary" ]; then
     TRAIT_ARGS="--bt --cc12"
@@ -117,6 +117,15 @@ elif [ "!{params.trait}" == "quantitative" ]; then
     TRAIT_ARGS="--qt --apply-rint"
 else
     echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
+    exit 1
+fi
+
+if [ "!{params.test}" == "firth" ]; then
+    TEST_ARGS="--firth --approx"
+elif [ "!{params.test}" == "spa" ]; then
+    TEST_ARGS="--spa"
+else
+    echo "Unsupported test type. Only 'firth' and 'spa' tests are supported." >/dev/stderr
     exit 1
 fi
 
@@ -134,8 +143,8 @@ regenie \
   --phenoFile !{phenofile} \
   --bsize 200 \
   $TRAIT_ARGS \
-  --firth --approx \
-  --pThresh 0.01 \
+  $TEST_ARGS \
+  --pThresh ${params.pthresh} \
   --loocv	\
   --pred !{predlist} \
   --out !{outprefix} \
