@@ -82,7 +82,7 @@ regenie \
   --bed tmp \
   --threads !{task.cpus} \
   --covarFile !{covars} \
-  --covarCol PC{1:!{params.pca_dims}} \
+  --covarCol $(cat !{covars_cols}) \
   --phenoFile !{phenofile} \
   --use-relative-path \
   --bsize 100 \
@@ -144,7 +144,7 @@ regenie \
   --bsize 200 \
   $TRAIT_ARGS \
   $TEST_ARGS \
-  --pThresh ${params.pthresh} \
+  --pThresh !{params.pthresh} \
   --loocv	\
   --pred !{predlist} \
   --out !{outprefix} \

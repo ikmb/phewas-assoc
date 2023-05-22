@@ -1,5 +1,6 @@
 process make_covars {
-	scratch params.scratch
+	//scratch params.scratch
+    scratch false
     publishDir params.output, mode: 'copy'
 	label 'base'
     input:
@@ -51,11 +52,19 @@ cat filtered-evec >>evec.double-id.withheader
 # Merge both, replace space runs with single tabs for SAIGE
 touch covars-column
 if [ ! -d "!{params.more_covars}" ]; then
-    echo PC{1..10},!{params.more_covars_cols}| sed 's/\\ ,/\\,/g' | tr ' ' , >!{params.collection_name}.covar_cols
+    echo PC{1..10}, !{params.more_covars_cols} | sed 's/\\ ,/\\,/g' | tr ' ' ,  | sed 's/\\,\\,/\\,/g' >!{params.collection_name}.covar_cols
 else
     echo PC{1..!{params.pca_dims}} | tr ' ' , >!{params.collection_name}.covar_cols
 fi
-paste -d" " evec.double-id.withheader covars-column | tr -s ' ' \\\\t >!{params.collection_name}.covars
+
+header=$(head -n 1 covars-column)
+if [[ $header == "FID\tIID"* ]]; then
+    awk '{$1="";$2="";print $0}' covars-column | sed 's/  //g' > covars-column_temp
+    paste -d" " evec.double-id.withheader covars-column_temp | tr -s ' ' \\\\t > !{params.collection_name}.covars > !{params.collection_name}.covars
+else
+    paste -d" " evec.double-id.withheader covars-column | tr -s ' ' \\\\t >!{params.collection_name}.covars
+fi
+#paste -d" " evec.double-id.withheader covars-column | tr -s ' ' \\\\t >!{params.collection_name}.covars_temp
 #pheno-column
 '''
 }
