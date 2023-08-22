@@ -53,7 +53,7 @@ cat filtered-evec >>evec.double-id.withheader
 # Merge both, replace space runs with single tabs for SAIGE
 touch covars-column
 if [[ -s "!{params.more_covars}" ]]; then
-    echo PC{1..10}, !{params.more_covars_cols} | sed 's/\\ ,/\\,/g' | tr ' ' ,  | sed 's/\\,\\,/\\,/g' >!{params.collection_name}.covar_cols
+    echo PC{1..!{params.pca_dims}}, !{params.more_covars_cols} | sed 's/\\ ,/\\,/g' | tr ' ' ,  | sed 's/\\,\\,/\\,/g' >!{params.collection_name}.covar_cols
 else
     echo PC{1..!{params.pca_dims}} | tr ' ' , >!{params.collection_name}.covar_cols
 fi
