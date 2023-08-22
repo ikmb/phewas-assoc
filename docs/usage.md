@@ -23,7 +23,7 @@ You will need to:
     - the `INFO` column in the VCF files should contain an imputation score. This is used to filter the input variants to create a good null model for SAIGE. For topmed imputations, we found `R2>0.8` to yield good results. If the given tag is not found in the VCF file, the default value 1.0 is assumed, making all variants pass the filter. This filter is not used for Plink-based association testing. 
 - A FAM file to update sex and phenotype from. Only those files in the FAM file will be used from the VCFs. Note that *all* samples from the FAM file must be present in the VCF files. **Note: if the FAM family ID is 0, the sample name in the VCF should be the individual ID. If the FID is not 0, the sample name should be the family ID and the individual ID with an underscore (i.e. FID 1234 IID 9876 should be 1234_9876 in the VCF file)**
 - The genome build of the input data, which will result in SAIGE handling the sex chromosomes according to the coordinates of the pseudoautosomal regions. Possible values are 37 and 38.
-- Optionally, you can specify additional covariates to be used in association testing. By default, 10 principal components are automatically generated and used. If you want additional covariates, have a whitespace-separated file with a header at hand. The first column should be the sample ID in `FID_IID` format, any futher column is treated as a covariate. Specify the covars file with `--more_covars $FILE` and the columns to be used with `--more_covars_cols AGE,SEX`, where `AGE` and `SEX` are the respective column headers from the covar file that you wish to be included.
+- Optionally, you can specify additional covariates to be used in association testing. By default, 10 principal components are automatically generated and used. If you want additional covariates, have a tab-separated file with a header at hand. The first two columns should be the family and individual ID in `FID\tIID` format, any futher column is treated as a covariate. Specify the covars file with `--more_covars $FILE` and the columns to be used with `--more_covars_cols AGE,SEX`, where `AGE` and `SEX` are the respective column headers from the covar file that you wish to be included.
 - The pipeline output and reports will be written to the `--output` directory.
 
 ### Parameters
@@ -36,13 +36,14 @@ The following list covers all parameters that may be specified for the Associati
 --fam [file.fam]                [REQUIRED] A Plink-style FAM file that will be used to select a
                                     subset of samples from the provided VCFs
 
---trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'.
+--trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case.
+--test [type]                   [ADVISED] Test algorithm. May be 'firth' (default) or 'spa'.
 --collection_name [name]        [ADVISED] Output filename prefix
 --output [directory]            [ADVISED] Output directory
 --more_covars [covars.txt]      [OPTIONAL] whitespace-separated list of covariates. See above.
 --more_covars_cols [COL1,COL2]  [OPTIONAL] comma-separated list of covar column header names
 --null_filter [filter]          [OPTIONAL] bcftools-style formatted INFO filter for generation of
-                                    the SAIGE null model. Default: "R2>0.8"
+                                    the null model. Default: "R2>0.8"
 -resume                         [OPTIONAL] Restart where the pipeline was cancelled or aborted. May or may
                                     not work, depending on your filesystem specifics
 

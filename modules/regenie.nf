@@ -12,7 +12,8 @@ process phenofile_from_fam {
     '''
     #gawk  'NR==1  {print "FID\tIID\tPhenotype"}{print "0\t"$1"_"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
     #gawk  'NR==1  {print "FID\tIID\tPhenotype"}{print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
-    gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
+    #gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
+    gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} if($6=="-9") {$6="NA";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
     '''
 }
 
@@ -56,11 +57,9 @@ process regenie_step1 {
     label 'regenie'
 
     input:
-        tuple path(bed), path(bim), path(fam), path(logfile)
-        tuple path(covars), path(covars_cols)
-        path(phenofile)
+        tuple path(bed), path(bim), path(fam), path(logfile), path(covars), path(covars_cols), path(phenofile)
     output:
-        tuple path('fit_bin_out_*.loco*'), path('fit_bin_out_pred.list')
+        tuple path('fit_bin_out_*.loco*'), path('fit_bin_out_pred.list'), path(covars), path(covars_cols), path(phenofile)
    	
     shell:
     '''
@@ -84,7 +83,7 @@ regenie \
   --bed tmp \
   --threads !{task.cpus} \
   --covarFile !{covars} \
-  --covarCol PC{1:!{params.pca_dims}} \
+  --covarCol $(cat !{covars_cols}) \
   --phenoFile !{phenofile} \
   --use-relative-path \
   --bsize 100 \
@@ -107,14 +106,11 @@ process regenie_step2 {
 
 
     input:
-        tuple path(bed), path(bim), path(fam), path(logfile)
-        tuple path(covars), path(covars_cols)
-        tuple path(locofiles), path(predlist)
-        path(phenofile)
+        tuple path(bed), path(bim), path(fam), path(logfile), path(locofiles), path(predlist), path(covars), path(covars_cols), path(phenofile)
     output:
-        path("${params.collection_name}_regenie_firth*")
+        path("${params.collection_name}_regenie_${params.test}*")
     shell:
-        outprefix = params.collection_name + '_regenie_firth'
+        outprefix = params.collection_name + '_regenie_' + params.test
 '''
 if [ "!{params.trait}" == "binary" ]; then
     TRAIT_ARGS="--bt --cc12"
@@ -122,6 +118,15 @@ elif [ "!{params.trait}" == "quantitative" ]; then
     TRAIT_ARGS="--qt --apply-rint"
 else
     echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
+    exit 1
+fi
+
+if [ "!{params.test}" == "firth" ]; then
+    TEST_ARGS="--firth --approx"
+elif [ "!{params.test}" == "spa" ]; then
+    TEST_ARGS="--spa"
+else
+    echo "Unsupported test type. Only 'firth' and 'spa' tests are supported." >/dev/stderr
     exit 1
 fi
 
@@ -135,12 +140,12 @@ regenie \
   --bed tmp \
   --threads !{task.cpus} \
   --covarFile !{covars} \
-  --covarCol PC{1:!{params.pca_dims}} \
+  --covarCol $(cat !{covars_cols}) \
   --phenoFile !{phenofile} \
   --bsize 200 \
   $TRAIT_ARGS \
-  --firth --approx \
-  --pThresh 0.01 \
+  $TEST_ARGS \
+  --pThresh !{params.pthresh} \
   --loocv	\
   --pred !{predlist} \
   --out !{outprefix} \
@@ -148,3 +153,4 @@ regenie \
   --gz
 '''
 }
+//#--covarCol PC{1:!{params.pca_dims}} \

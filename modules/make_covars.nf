@@ -1,5 +1,6 @@
 process make_covars {
-	scratch params.scratch
+	//scratch params.scratch
+    scratch false
     publishDir params.output, mode: 'copy'
 	label 'base'
     input:
@@ -9,13 +10,14 @@ process make_covars {
 
     output:
     tuple path("${params.collection_name}.covars"), path("${params.collection_name}.covar_cols"), emit: covars/// into for_saige_null_covars, for_merge_sumstats_covars, for_plink_covars
-    path("${params.collection_name}.double-id.fam"), emit: plink_fam// into for_plink_fam
-	tuple path("${params.collection_name}.covars"), path("${params.collection_name}.covar_cols"), path("${params.collection_name}.double-id.fam"), emit: for_plink
+    //path("${params.collection_name}.double-id.fam"), emit: plink_fam// into for_plink_fam
+	//tuple path("${params.collection_name}.covars"), path("${params.collection_name}.covar_cols"), path("${params.collection_name}.double-id.fam"), emit: for_plink
 
     shell:
 '''
 # Re-format sample ID and family ID to VCF rules
 gawk '{if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' !{inc_fam}  | sort >new-fam
+##gawk '{ {$2=$1"_"$2; $1="0";} print $0}' !{inc_fam} | sort >new-fam
 # Also re-format, but keep evec header
 # mawk 'NR==1{print $0;next} {if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' {in_covars}  | sort >evec
 # Take evec file as a whole, SAIGE does not care about additional columns.
@@ -45,17 +47,26 @@ echo "FID IID" PC{1..!{params.pca_dims}} >evec.double-id.withheader
 
 cat filtered-evec >>evec.double-id.withheader
 # Take phenotype info from FAM, translate to SAIGE-encoding
-echo "Pheno" >pheno-column
-<new-fam  gawk '{if($6=="2") {$6="1";} else if($6=="1") {$6="0";} print $6}' >>pheno-column
-mv new-fam !{params.collection_name}.double-id.fam
+#echo "Pheno" >pheno-column
+#<new-fam  gawk '{if($6=="2") {$6="1";} else if($6=="1") {$6="0";} print $6}' >>pheno-column
+#mv new-fam !{params.collection_name}.double-id.fam
 # Merge both, replace space runs with single tabs for SAIGE
 touch covars-column
-if [ ! -d "!{params.more_covars}" ]; then
-    echo PC{1..10} ,sex,age,bmi,PC1_diet_uw,PC2_diet_uw,PC3_diet_uw,PC4_diet_uw,PC5_diet_uw,PC6_diet_uw,PC7_diet_uw,PC8_diet_uw,PC9_diet_uw,PC10_diet_uw | sed 's/\\ ,/\\,/g' | tr ' ' , >!{params.collection_name}.covar_cols
+if [[ -s "!{params.more_covars}" ]]; then
+    echo PC{1..10}, !{params.more_covars_cols} | sed 's/\\ ,/\\,/g' | tr ' ' ,  | sed 's/\\,\\,/\\,/g' >!{params.collection_name}.covar_cols
 else
     echo PC{1..!{params.pca_dims}} | tr ' ' , >!{params.collection_name}.covar_cols
 fi
-paste -d" " evec.double-id.withheader pheno-column covars-column | tr -s ' ' \\\\t >!{params.collection_name}.covars
+
+header=$(head -n 1 covars-column)
+if [[ $header == "FID\tIID"* ]]; then
+    awk '{$1="";$2="";print $0}' covars-column | sed 's/  //g' > covars-column_temp
+    paste -d" " evec.double-id.withheader covars-column_temp | tr -s ' ' \\\\t > !{params.collection_name}.covars > !{params.collection_name}.covars
+else
+    paste -d" " evec.double-id.withheader covars-column | tr -s ' ' \\\\t >!{params.collection_name}.covars
+fi
+#paste -d" " evec.double-id.withheader covars-column | tr -s ' ' \\\\t >!{params.collection_name}.covars_temp
+#pheno-column
 '''
 }
 
