@@ -12,7 +12,8 @@ process phenofile_from_fam {
     '''
     #gawk  'NR==1  {print "FID\tIID\tPhenotype"}{print "0\t"$1"_"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
     #gawk  'NR==1  {print "FID\tIID\tPhenotype"}{print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
-    gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
+    #gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
+    gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} if($6=="-9") {$6="NA";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
     '''
 }
 

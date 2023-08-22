@@ -17,6 +17,7 @@ process make_covars {
 '''
 # Re-format sample ID and family ID to VCF rules
 gawk '{if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' !{inc_fam}  | sort >new-fam
+##gawk '{ {$2=$1"_"$2; $1="0";} print $0}' !{inc_fam} | sort >new-fam
 # Also re-format, but keep evec header
 # mawk 'NR==1{print $0;next} {if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' {in_covars}  | sort >evec
 # Take evec file as a whole, SAIGE does not care about additional columns.
@@ -51,7 +52,7 @@ cat filtered-evec >>evec.double-id.withheader
 #mv new-fam !{params.collection_name}.double-id.fam
 # Merge both, replace space runs with single tabs for SAIGE
 touch covars-column
-if [ ! -d "!{params.more_covars}" ]; then
+if [[ -s "!{params.more_covars}" ]]; then
     echo PC{1..10}, !{params.more_covars_cols} | sed 's/\\ ,/\\,/g' | tr ' ' ,  | sed 's/\\,\\,/\\,/g' >!{params.collection_name}.covar_cols
 else
     echo PC{1..!{params.pca_dims}} | tr ' ' , >!{params.collection_name}.covar_cols

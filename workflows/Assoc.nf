@@ -5,13 +5,13 @@ include { generate_pcs } from '../modules/flashpca.nf'
 include { make_covars } from '../modules/make_covars.nf'
 include { gen_r2_list } from '../modules/bcftools.nf'
 
-include { prune;
-		  merge_plink;
-          make_plink } from '../modules/plink2.nf'
+include {	prune;
+			merge_plink;
+			make_plink } from '../modules/plink2.nf'
 
-include { merge_plink_results;
-          merge_r2
-        } from '../modules/merge_processes.nf'
+include {	merge_plink_results;
+			merge_r2
+		} from '../modules/merge_processes.nf'
 		
 include {regenie_step1;
 		 regenie_step2;
@@ -23,13 +23,13 @@ include { prune_python_helper } from '../modules/python2.nf'
 
 //function definitions
 def get_file_details(filename) {
-    def m = filename =~ /\/([^\/]+)(\.vcf\.gz|\.bgen)$/
-    return [ m[0][1], m[0][2] ]
+	def m = filename =~ /\/([^\/]+)(\.vcf\.gz|\.bgen)$/
+	return [ m[0][1], m[0][2] ]
 	}
 
 def get_chromosome_code(filename) {
-    def m = filename =~ /\/([^\/]+).ap_prf.vcf.gz$/
-    return m[0][1]
+	def m = filename =~ /\/([^\/]+).ap_prf.vcf.gz$/
+	return m[0][1]
 	}
 
 
@@ -45,8 +45,8 @@ workflow assoc{
 	//params.fam_length=check_fam_for_saige( file(params.fam) )
 
 	for_saige_imp = Channel.fromPath(params.input_imputed_glob, checkIfExists: true).map { it ->
-    	def match = get_file_details(it)
-    	[it, match[1]] }
+		def match = get_file_details(it)
+		[it, match[1]] }
 
 
 	//TODO: Check for sanity of phenofile or fam file regarding phenotypes

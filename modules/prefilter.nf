@@ -21,7 +21,9 @@ shell:
 tabix -p vcf !{vcf}
 # Gather lists of samples with proper double-ID handling
 bcftools query -l !{vcf} | sort >vcf-samples
+#TODO: the line below needs a rewriting to also include samples that have no family id if others have them, or we gonna loose them in later analysis or error out
 gawk '{if($1!="0") {$2=$1"_"$2; $1="0";} print $2}' !{inc_fam} | sort >fam-samples
+#gawk '{ {$2=$1"_"$2; $1="0";} print $2}' !{inc_fam} | sort >fam-samples
 # Keep only those samples that are in VCF and in FAM file
 comm -12 vcf-samples fam-samples >keep-samples
 # Count those that we ought to remove

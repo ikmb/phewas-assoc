@@ -33,8 +33,8 @@ rm intermediate*
 
 process make_plink {
     label "plink2"
-	scratch params.scratch
-    //scratch false
+	//scratch params.scratch
+    scratch false
     tag "${params.collection_name}.$chrom"
 
     input:
@@ -50,7 +50,7 @@ shell:
         # Generate double-id FAM
         MEM=!{task.memory.toMega()-1000}
         #this was gawk originally:
-        awk '{if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' !{fam} >new-fam
+        awk '{$3="0";$4="0";if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' !{fam} >new-fam
         #awk '{if($1!="0") {$1="0";} print $0}' !{fam} >new-fam
         plink2 --vcf !{vcf} --const-fid 0 --memory $MEM --max-alleles 2 --keep-nosex --pheno new-fam --pheno-col-nums 4 --update-sex new-fam col-num=3 --output-chr chrM --make-bed --out !{params.collection_name}.!{chrom}
         #--keep-allele-order (has no longer an effect)
