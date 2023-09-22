@@ -5,12 +5,12 @@ process prune {
     publishDir params.output, mode: 'copy'
 
     input:
-    	tuple path(bed), path(bim), path(fam), path(logfile)
-    	path(r2)
+        tuple path(bed), path(bim), path(fam), path(logfile)
+        path(r2)
 		path("include-r2-variants")
 
     output:
-    	tuple file("${params.collection_name}.pruned.bed"), file("${params.collection_name}.pruned.bim"), file("${params.collection_name}.pruned.fam"), file("${params.collection_name}.pruned.log")// into for_saige_null, for_liftover_pruned, for_generate_pcs
+        tuple file("${params.collection_name}.pruned.bed"), file("${params.collection_name}.pruned.bim"), file("${params.collection_name}.pruned.fam"), file("${params.collection_name}.pruned.log")// into for_saige_null, for_liftover_pruned, for_generate_pcs
 
 	shell:
 '''
@@ -24,7 +24,7 @@ if [ ! -s $R2 ]; then
     cut -f2 -d" " !{bim} | sort >new-r2
     R2=new-r2
 fi
-plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract $R2 --indep-pairwise 50 5 0.2 --out _prune
+plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract $R2 --indep-pairwise !{params.pruning_parameter} --out _prune
 plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract _prune.prune.in --maf 0.05 --make-bed --out intermediate
 plink2 --memory $MEM --threads !{task.cpus} --bfile intermediate --chr 1-22 --extract include-r2-variants --output-chr chrM --make-bed --out !{params.collection_name}.pruned
 rm intermediate*

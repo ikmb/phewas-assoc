@@ -2,8 +2,11 @@
 include { option_check } from '../modules/option_check.nf'
 include { prefilter } from '../modules/prefilter.nf'
 include { generate_pcs } from '../modules/flashpca.nf'
-include { make_covars } from '../modules/make_covars.nf'
 include { gen_r2_list } from '../modules/bcftools.nf'
+
+include {	make_covars; 
+			make_covars_nopca
+		} from '../modules/make_covars.nf'
 
 include {	prune;
 			merge_plink;
@@ -13,10 +16,11 @@ include {	merge_plink_results;
 			merge_r2
 		} from '../modules/merge_processes.nf'
 		
-include {regenie_step1;
-		 regenie_step2;
-		 phenofile_from_fam;
-		 split_input_phenofile
+include {	regenie_step1;
+			regenie_step2;
+			phenofile_from_fam;
+			split_input_phenofile;
+			awk_regenie
 		} from '../modules/regenie.nf'
 
 include { prune_python_helper } from '../modules/python2.nf'
@@ -68,7 +72,7 @@ workflow assoc{
 	merge_r2( gen_r2_list.out.collect() )
 
 	make_plink ( ch_mapped_prefilter,
-				 ch_fam_pheno )
+					ch_fam_pheno )
 
 	merge_plink ( make_plink.out.collect() )
 
@@ -80,11 +84,19 @@ workflow assoc{
 		   prune_python_helper.out )
 
 //FLASHPCA2
-	generate_pcs( prune.out )
+//TODO: Make PC generation optional if one wants to supply them via covariates file
+	if(!params.no_pca){
+		generate_pcs( prune.out )
 
-	make_covars( generate_pcs.out,
-				 ch_fam_pheno )
+		make_covars( generate_pcs.out,
+					ch_fam_pheno )
 
+		ch_covars = make_covars.out.covars
+	}else{
+		make_covars_nopca(ch_fam_pheno)
+
+		ch_covars = make_covars_nopca.out.covars	
+	}
 //REGENIE
 	if(!params.disable_regenie){
 		if(params.phenofile){
@@ -92,10 +104,47 @@ workflow assoc{
 			//TODO: check if phenofile exist
 			//ch_pheno = Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"}
 			split_input_phenofile( Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"} )
-			ch_pheno = split_input_phenofile.out.flatten()
+			
+			if (params.trait == "binary" ){
+				ch_pheno = split_input_phenofile.out
+					.flatten()
+					.map{it ->
+					def meta = [:]
+					meta.valid = check_pheno_for_assoc(it)
+					if(!meta.valid){
+						println "Phenotype ${it.simpleName} is not containing at least 10 phenotypes!"
+					}
+				return [meta, it]
+				}
+			}else{
+				ch_pheno = split_input_phenofile.out.flatten().map{ it -> 
+					def meta = [:]
+					meta.valid = true
+					return [meta, it]
+					}
+			}
 		}else{
 			phenofile_from_fam( Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"} )
-			ch_pheno = phenofile_from_fam.out
+			if (params.trait == "binary" ){
+				ch_pheno = phenofile_from_fam.out
+					.flatten()
+					.map{it ->
+					def meta = [:]
+					meta.valid = check_pheno_for_assoc(it)
+					if(!meta.valid){
+						println "The phenotype is not containing at least 10 phenotypes!"
+					}
+				return [meta, it]
+				}
+			}else{
+				ch_pheno = phenofile_from_fam.out
+					.flatten()
+					.map{ it -> 
+					def meta = [:]
+					meta.valid = true
+					return [meta, it]
+					}
+			}
 		}
 //TODO: Implement to remove missing phenotypes for each run separately:
 		if(!params.remove_missing_phenotypes){
@@ -104,11 +153,24 @@ workflow assoc{
 			ch_regenie_plink = merge_plink.out
 		}
 
-		ch_regenie1_input = prune.out.combine(make_covars.out.covars).combine(ch_pheno)
+		ch_regenie1_input = prune.out.combine(ch_covars).combine(ch_pheno)
 		//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
 		regenie_step1( ch_regenie1_input )
 
 		ch_regenie2_input = ch_regenie_plink.combine(regenie_step1.out)
 		regenie_step2( ch_regenie2_input )
+		awk_regenie( regenie_step2.out.sumstat )
 	}
+}
+
+def check_pheno_for_assoc(file) {
+    def lines = file.readLines()
+        int x = 0
+        int y = 0	
+    lines.each { String line ->
+        if(line.split(" |\t")[2] == "2") x++
+        if(line.split(" |\t")[2] == "1") y++
+
+    }
+    return(x > 10 && y > 10)
 }
