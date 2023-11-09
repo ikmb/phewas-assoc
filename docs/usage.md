@@ -1,9 +1,21 @@
 # Usage information
 
 ## Quick Start
-1. Run the [Quality Control Pipeline](https://github.com/ikmb/gwas-qc/blob/master/Readme.md#quick-start) on the example first.
+1. Install and make sure, Singularity (now Apptainer) and Nextflow are working. For example via [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html):
+    ```bash
+    # Create a new conda environment for Singularity and Nextflow
+    conda create --name nf_env -c conda-forge -c bioconda singularity nextflow
+    # Activate environment
+    conda activate nf_env
+    # Try a simple Nextflow demo
+    nextflow run hello
+    # Check Singularity
+    singularity --version
+    ```
+   
+2. Run the [Quality Control Pipeline](https://github.com/ikmb/gwas-qc/blob/master/Readme.md#quick-start) on the example first.
     - All files necessary for the association testing pipeline are automatically generated.
-2. Run the phewas-assoc pipeline with like so:
+3. Run the phewas-assoc pipeline with like so:
    ```
    nextflow run ikmb/phewas-assoc \
     --input_imputed_glob "gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
@@ -50,3 +62,16 @@ The following list covers all parameters that may be specified for the Associati
 --additional_regenie_parameter  [OPTIONAL] Add additional parameters to step2 of regenie e.g. annotation and mask parameters 
                                     for gene-based testing.
 ```
+## Quick start on Kiel medcluster
+On medcluster you only need to load the dependencies Singularity and Nextflow. Then the pipeline can directly be executed.
+
+   ```
+   module load singularity nextflow
+
+   nextflow run ikmb/phewas-assoc \
+    --input_imputed_glob "gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
+    --fam "gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
+    --collection_name "EXAMPLE" \
+    --output "output/Example/Assoc"
+    
+    ```
