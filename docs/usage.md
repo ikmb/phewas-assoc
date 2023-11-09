@@ -3,9 +3,9 @@
 ## Quick Start
 1. Run the [Quality Control Pipeline](https://github.com/ikmb/gwas-qc/blob/master/Readme.md#quick-start) on the example first.
     - All files necessary for the association testing pipeline are automatically generated.
-2. Run the gwas-assoc pipeline with like so:
+2. Run the phewas-assoc pipeline with like so:
    ```
-   nextflow run ikmb/gwas-assoc -r DSL2 \
+   nextflow run ikmb/phewas-assoc \
     --input_imputed_glob "gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
     --fam "gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
     --collection_name "EXAMPLE" \
@@ -35,8 +35,9 @@ The following list covers all parameters that may be specified for the Associati
                                     for association analysis
 --fam [file.fam]                [REQUIRED] A Plink-style FAM file that will be used to select a
                                     subset of samples from the provided VCFs
-
---trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case.
+--phenofile                     [OPTIONAL] Phenotype file for multiple phenotype/traits-testing with regenie. 
+                                    Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2" Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA.
+--trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case in the phenofile/fam.
 --test [type]                   [ADVISED] Test algorithm. May be 'firth' (default) or 'spa'.
 --collection_name [name]        [ADVISED] Output filename prefix
 --output [directory]            [ADVISED] Output directory
@@ -46,9 +47,6 @@ The following list covers all parameters that may be specified for the Associati
                                     the null model. Default: "R2>0.8"
 -resume                         [OPTIONAL] Restart where the pipeline was cancelled or aborted. May or may
                                     not work, depending on your filesystem specifics
-
---phenofile                     [OPTIONAL] Phenotype file for multiple phenotype/traits-testing with regenie. 
-                                    Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2" Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA.
 --additional_regenie_parameter  [OPTIONAL] Add additional parameters to step2 of regenie e.g. annotation and mask parameters 
                                     for gene-based testing.
 ```
