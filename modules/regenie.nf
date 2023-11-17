@@ -4,6 +4,7 @@ process phenofile_from_fam {
 	label 'base'
 
 	input:
+		val(readystate)
 		path(assocfam)
 	output:
 		path('phenotype.txt')
@@ -23,6 +24,7 @@ process split_input_phenofile {
 	label 'base'
 
 	input:
+		val(readystate)
 		path(phenofile)
 	output:
 		path('*.txt')

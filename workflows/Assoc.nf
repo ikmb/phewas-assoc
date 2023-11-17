@@ -4,9 +4,8 @@ include { prefilter } from '../modules/prefilter.nf'
 include { generate_pcs } from '../modules/flashpca.nf'
 include { gen_r2_list } from '../modules/bcftools.nf'
 
-include {	make_covars; 
-			make_covars_nopca
-		} from '../modules/make_covars.nf'
+include {	make_covars;
+			make_covars_nopca } from '../modules/make_covars.nf'
 
 include {	prune;
 			merge_plink;
@@ -60,7 +59,8 @@ workflow assoc{
 		ch_fam_pheno = Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile file, please specify at least one of '--phenofile' or '--fam' in your pipeline call"}
 	}
 
-	prefilter( for_saige_imp,
+	prefilter( option_check.out.readystate,
+				for_saige_imp,
 				ch_fam_pheno )
 
 	ch_mapped_prefilter = prefilter.out.map { it -> [it[0], it[1], get_chromosome_code(it[0]), it[2]] }
@@ -85,25 +85,28 @@ workflow assoc{
 
 //FLASHPCA2
 //TODO: Make PC generation optional if one wants to supply them via covariates file
-	if(!params.no_pca){
+	if(params.pca_dims != 0){
 		generate_pcs( prune.out )
 
 		make_covars( generate_pcs.out,
 					ch_fam_pheno )
 
 		ch_covars = make_covars.out.covars
-	}else{
-		make_covars_nopca(ch_fam_pheno)
-
-		ch_covars = make_covars_nopca.out.covars	
+	}else{ //NOT WORKING YET
+		make_covars_nopca( option_check.out.readystate,
+							ch_fam_pheno )
+		
+		ch_covars = make_covars_nopca.out.covars
 	}
+
 //REGENIE
 	if(!params.disable_regenie){
 		if(params.phenofile){
 			//TODO: completely remove fam file requirement if phenofile is given
 			//TODO: check if phenofile exist
 			//ch_pheno = Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"}
-			split_input_phenofile( Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"} )
+			split_input_phenofile( option_check.out.readystate,
+									Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile"} )
 			
 			if (params.trait == "binary" ){
 				ch_pheno = split_input_phenofile.out
@@ -124,7 +127,8 @@ workflow assoc{
 					}
 			}
 		}else{
-			phenofile_from_fam( Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"} )
+			phenofile_from_fam( option_check.out.readystate,
+								Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"} )
 			if (params.trait == "binary" ){
 				ch_pheno = phenofile_from_fam.out
 					.flatten()
@@ -161,6 +165,15 @@ workflow assoc{
 		regenie_step2( ch_regenie2_input )
 		awk_regenie( regenie_step2.out.sumstat )
 	}
+/*
+	if(params.plink_assoc){
+		extract_dosage( prefilter.out.map { it -> [it[0], it[1], get_chromosome_code(it[0]), it[2]] } )
+		TODO: aktuell nur für fam, nicht für multiple phenotypes, benötigt noch einen prozess, der automatisiert neue fam files für jeden phenotype erstellt und besser zu plink2 wechseln
+		plink_assoc(extract_dosage.out,
+					ch_covars,
+					ch_fam)
+	}
+*/
 }
 
 def check_pheno_for_assoc(file) {

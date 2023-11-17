@@ -4,7 +4,7 @@ process option_check {
     errorStrategy 'terminate'
     input:
     output:
-
+        val 'true', emit: readystate
 shell:
 '''
 #!/bin/bash
@@ -43,13 +43,3 @@ esac
 exit $ERROR
 '''
 }
-/*
-# Genome build
-case "!{params.build}" in
-    37) ;;
-    38) ;;
-    *) echo "Unsupported genome build. Please specify --build 37 or --build 38." >/dev/stderr
-       ERROR=1
-       ;;
-esac
-*/
