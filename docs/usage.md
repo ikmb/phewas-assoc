@@ -15,11 +15,12 @@
    
 2. Run the [Quality Control Pipeline](https://github.com/ikmb/gwas-qc/blob/master/Readme.md#quick-start) on the example first.
     - All files necessary for the association testing pipeline are automatically generated.
+
 3. Run the phewas-assoc pipeline with like so:
    ```
    nextflow run ikmb/phewas-assoc \
-    --input_imputed_glob "gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
-    --fam "gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
+    --input_imputed_glob "/pathto/gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
+    --fam "/pathto/gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
     --collection_name "EXAMPLE" \
     --output "output/Example/Assoc"
     
@@ -61,6 +62,9 @@ The following list covers all parameters that may be specified for the Associati
                                     not work, depending on your filesystem specifics
 --additional_regenie_parameter  [OPTIONAL] Add additional parameters to step2 of regenie e.g. annotation and mask parameters 
                                     for gene-based testing.
+--pca_dims [integer]            [OPTIONAL] Define how many PCs should be calculated and included in association testing. Expects integer values. 0 would mean, no PCs will be calculated. Default is 10.
+--plink_assoc                   [OPTIONAL] Perform association tests with plink2 --glm. 
+--plink2_glm_options            [OPTIONAL] When performing plink2 --glm, adjust the --glm parameter with modifiers. Default: "omit-ref hide-covar"
 ```
 ## Quick start on Kiel medcluster
 On medcluster you only need to load the dependencies Singularity and Nextflow. Then the pipeline can directly be executed.

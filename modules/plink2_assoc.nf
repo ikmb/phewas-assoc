@@ -14,11 +14,9 @@ process plink2_assoc {
     script:
         phenotype = phenofile.getSimpleName()
         output_name = chrom + '.plink2_assoc_' + phenotype
-        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : " --glm omit-ref hide-covar"
+        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar"
         def memory = task.memory.toMega()-1000
     """
-        
-        
         plink2 --vcf ${vcf} dosage=GP \
             --threads ${task.cpus} \
             --memory $memory \
