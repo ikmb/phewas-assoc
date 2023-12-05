@@ -15,10 +15,10 @@ class WorkflowMain {
         def headr = ''
         def info_line = "IKMB PheWAS association testing pipeline | version ${workflow.manifest.version}"
         headr = """
-    ===============================================================================
-    ${info_line}
-    ===============================================================================
-    """
+===============================================================================
+${info_line}
+===============================================================================
+"""
         return headr
     }
 
@@ -47,6 +47,8 @@ Optional parameters:
     --more_covars                  Whitespace-separated list of covariates with columnsheader "FID IID Covar1 Covar2" 
                                    Entries must be "0" for FID, "FID_IID" for IID
 
+    --plink_assoc                  Enable Plink2 GLM association testing
+    --disable_regenie              Disable Regenie association testing
     --more_covars_cols             Comma-separated list of covar column header names. Example: "Covar1,Covar2"
     --null_filter [filter]         Bcftools-style formatted INFO filter for generation of the null model. Default: "R2>0.8"
     --additional_regenie_parameter Add additional parameters to step2 of regenie e.g. annotation and mask parameters for gene-based testing.

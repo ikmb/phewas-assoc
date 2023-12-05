@@ -13,7 +13,7 @@ class WorkflowPhewas {
         }
 
         if (!FileValidator.validateFile(params.fam)) {
-            log.info "File '${params.fam}' does not exist or is empty, exiting now."
+            log.info "Fam File '${params.fam}' does not exist or is empty, exiting now."
             System.exit(1)
         }
 
@@ -29,18 +29,20 @@ class WorkflowPhewas {
 
         if(params.phenofile){
             if (!FileValidator.validateFile(params.phenofile)) {
-                log.info "File '${params.phenofile}' does not exist or is empty, exiting now."
+                log.info "Phenofile '${params.phenofile}' does not exist or is empty, exiting now."
                 System.exit(1)
             }
             def rows = FileValidator.count_file_lines(params.phenofile)
             log.info "Phenofile contains ${rows} rows"
         }
 
-        if(params.more_covars){
+//TODO: more_covars is "." as default
+        if(params.more_covars && params.more_covars != "."){
             if (!FileValidator.validateFile(params.more_covars)) {
-                log.info"File '${params.more_covars}' does not exist or is empty, exiting now."
+                log.info"Covariate File '${params.more_covars}' does not exist or is empty, exiting now."
                 System.exit(1)
             }
+
             //Covariate file should contain the same amount of samples
             if(params.phenofile){
                 def phenorows = FileValidator.count_file_lines(params.phenofile)

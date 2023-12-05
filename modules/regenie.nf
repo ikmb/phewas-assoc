@@ -54,9 +54,10 @@ process split_input_phenofile {
 }
 
 process regenie_step1 {
-	tag "${params.collection_name}"
+	tag "${params.collection_name}_${phenofile.getSimpleName()}"
 	scratch params.scratch
 	label 'regenie'
+	cache 'lenient'
 
 	input:
 		tuple path(bed), path(bim), path(fam), path(logfile), path(covars), path(covars_cols), val(meta), path(phenofile)
@@ -66,37 +67,37 @@ process regenie_step1 {
 	when: meta.valid
 	shell:
 	'''
-sed 's/^chr//' !{bim.baseName}.bim >tmp.bim
+	sed 's/^chr//' !{bim.baseName}.bim >tmp.bim
 
-ln -s !{bed} tmp.bed
-ln -s !{fam} tmp.fam
+	ln -s !{bed} tmp.bed
+	ln -s !{fam} tmp.fam
 
-export R_LIBS_USER=/dev/null
-if [ "!{params.trait}" == "binary" ]; then
-	TRAIT_ARGS="--bt --cc12"
-elif [ "!{params.trait}" == "quantitative" ]; then
-	TRAIT_ARGS="--qt --apply-rint"
-else
-	echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
-	exit 1
-fi
+	export R_LIBS_USER=/dev/null
+	if [ "!{params.trait}" == "binary" ]; then
+		TRAIT_ARGS="--bt --cc12"
+	elif [ "!{params.trait}" == "quantitative" ]; then
+		TRAIT_ARGS="--qt --apply-rint"
+	else
+		echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
+		exit 1
+	fi
 
-regenie \
-	--step 1 \
-	--bed tmp \
-	--threads !{task.cpus} \
-	--covarFile !{covars} \
-	--covarCol $(cat !{covars_cols}) \
-	--phenoFile !{phenofile} \
-	--use-relative-path \
-	--bsize 100 \
-	$TRAIT_ARGS \
-	--lowmem \
-	--loocv	\
-	--lowmem-prefix tmp_rg \
-	!{params.additional_regenie_parameter} \
-	--out fit_bin_out \
-	--gz
+	regenie \
+		--step 1 \
+		--bed tmp \
+		--threads !{task.cpus} \
+		--covarFile !{covars} \
+		--covarCol $(cat !{covars_cols}) \
+		--phenoFile !{phenofile} \
+		--use-relative-path \
+		--bsize 100 \
+		$TRAIT_ARGS \
+		--lowmem \
+		--loocv	\
+		--lowmem-prefix tmp_rg \
+		!{params.additional_regenie_parameter} \
+		--out fit_bin_out \
+		--gz
 	'''
 }
 //--phenoCol "Phenotype" \
@@ -106,6 +107,7 @@ process regenie_step2 {
 	tag "${params.collection_name}_${phenofile.getSimpleName()}"
 	label 'regenie'
 	publishDir params.output, mode: 'copy'
+	cache 'lenient'
 
 
 	input:
