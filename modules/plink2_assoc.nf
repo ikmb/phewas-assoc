@@ -11,24 +11,26 @@ process plink2_assoc {
         path('*'), emit: all
         tuple val(phenotype), path('*.glm*'), emit: plinksumstats
     when: meta.valid
-    shell:
+    script:
         phenotype = phenofile.getSimpleName()
         output_name = chrom + '.plink2_assoc_' + phenotype
-    '''
-        MEM=!{task.memory.toMega()-1000}
+        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : " --glm omit-ref hide-covar"
+        def memory = task.memory.toMega()-1000
+    """
         
-        plink2 --vcf !{vcf} \
-            --threads !{task.cpus} \
-            --memory $MEM \
-            --out !{output_name} \
-            --glm omit-ref hide-covar \
-            --pheno-name !{phenotype} \
-            --covar !{params.collection_name}.covars \
-            --covar-name $(cat !{covars_cols}) \
-            --pheno !{phenofile}
-    '''
+        
+        plink2 --vcf ${vcf} dosage=GP \
+            --threads ${task.cpus} \
+            --memory $memory \
+            --out ${output_name} \
+            $glmoptions \
+            --pheno-name ${phenotype} \
+            --covar ${params.collection_name}.covars \
+            --covar-name \$(cat ${covars_cols}) \
+            --pheno ${phenofile}
+    """
 }
-
+//MEM=${task.memory.toMega()-1000}
 process plink2_assoc_merge {
     tag "${params.collection_name}_${phenotype}"
 	scratch params.scratch
