@@ -52,7 +52,9 @@ Optional parameters:
     --more_covars_cols             Comma-separated list of covar column header names. Example: "Covar1,Covar2"
     --null_filter [filter]         Bcftools-style formatted INFO filter for generation of the null model. Default: "R2>0.8"
     --additional_regenie_parameter Add additional parameters to step2 of regenie e.g. annotation and mask parameters for gene-based testing.
-    --build                        37 or 38 are valid options. No use currently.
+    --build                        37 or 38 are valid options.
+    --pca_dims                     Define how many principle components should be calculated and included.
+    --plink2_glm_options           When performing plink2 association testing, adjust the --glm parameter within plink2 with modifiers. Default: "omit-ref hide-covar".
 Output:
     --output                       Local directory to which all output is written
     --collection_name              Output filename prefix

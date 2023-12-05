@@ -23,7 +23,6 @@
     --fam "/pathto/gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
     --collection_name "EXAMPLE" \
     --output "output/Example/Assoc"
-    
     ```
 
 ## How to Start
@@ -32,10 +31,10 @@ You will need to:
 - A set of `.vcf.gz` files with the following specifics:
     - at most one chromosome per `.vcf.gz` file. Multiple chromosomes per files are not supported. If a file happens to have multiple chromosomes, only the first will be analyzed.
     - any chromosome codes are supported (i.e. `chrX`, `X`, `23`, `chr23`, `chromosomeX` are just fine)
-    - **your VCF files require dosage data (DS tag) for imputed data or genotype calls (GT tag) for genotyped data. If both tags are found, DS is chosen.**
+    - **your VCF files can contain genotype probabilities (GP tag) for imputed data or genotype calls (GT tag) for genotyped data for the analysis with Plink2. If both tags are found, GP is chosen.**
     - the `INFO` column in the VCF files should contain an imputation score. This is used to filter the input variants to create a good null model for SAIGE. For topmed imputations, we found `R2>0.8` to yield good results. If the given tag is not found in the VCF file, the default value 1.0 is assumed, making all variants pass the filter. This filter is not used for Plink-based association testing. 
 - A FAM file to update sex and phenotype from. Only those files in the FAM file will be used from the VCFs. Note that *all* samples from the FAM file must be present in the VCF files. **Note: if the FAM family ID is 0, the sample name in the VCF should be the individual ID. If the FID is not 0, the sample name should be the family ID and the individual ID with an underscore (i.e. FID 1234 IID 9876 should be 1234_9876 in the VCF file)**
-- The genome build of the input data, which will result in SAIGE handling the sex chromosomes according to the coordinates of the pseudoautosomal regions. Possible values are 37 and 38.
+- The genome build of the input data, which will result in Regenie handling the sex chromosomes according to the coordinates of the pseudoautosomal regions. Possible values are 37 and 38.
 - Optionally, you can specify additional covariates to be used in association testing. By default, 10 principal components are automatically generated and used. If you want additional covariates, have a tab-separated file with a header at hand. The first two columns should be the family and individual ID in `FID\tIID` format, any futher column is treated as a covariate. Specify the covars file with `--more_covars $FILE` and the columns to be used with `--more_covars_cols AGE,SEX`, where `AGE` and `SEX` are the respective column headers from the covar file that you wish to be included.
 - The pipeline output and reports will be written to the `--output` directory.
 
@@ -51,6 +50,7 @@ The following list covers all parameters that may be specified for the Associati
 | [OPTIONAL] | `--phenofile` | [filepath]  | Phenotype file for multiple phenotype/traits-testing with regenie. Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2". Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA. |
 | [ADVISED] | `--trait` | [type]  | Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case in the phenofile/fam. |
 | [ADVISED] | `--test` | [type]  | Test algorithm. May be 'firth' (default) or 'spa'. |
+| [ADVISED] | `--build` | [integer] | Define the human genome build code. Valid numbers are 37 and 38. |
 | [ADVISED] | `--collection_name` | [name] | Output filename prefix |
 | [ADVISED] | `--output` | [filepath]  | Output directory. Default: "output/assoc" |
 | [OPTIONAL] | `--more_covars` | [filepath] | Whitespace-separated list of covariates. Columnsheader "FID IID Covariate1 Covariate2". |

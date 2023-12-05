@@ -82,6 +82,15 @@ process regenie_step1 {
 		exit 1
 	fi
 
+	if [ "!{params.build}" == "37" ]; then
+		BUILT_ARGS="--par-region hg37"
+	elif [ "!{params.build}" == "38" ]; then
+		BUILT_ARGS="--par-region hg38"
+	else
+		echo "Unsupported build type. Only the builts '37' and '38' are supported." >/dev/stderr
+		exit 1
+	fi
+
 	regenie \
 		--step 1 \
 		--bed tmp \
@@ -92,6 +101,7 @@ process regenie_step1 {
 		--use-relative-path \
 		--bsize 100 \
 		$TRAIT_ARGS \
+		$BUILT_ARGS \
 		--lowmem \
 		--loocv	\
 		--lowmem-prefix tmp_rg \
@@ -137,6 +147,17 @@ process regenie_step2 {
 			exit 1
 		fi
 
+		if [ "!{params.build}" == "37" ]; then
+			BUILT_ARGS="--par-region hg19"
+		elif [ "!{params.build}" == "38" ]; then
+			BUILT_ARGS="--par-region hg38"
+		elif [ "!{params.build}" == "19" ]; then
+			BUILT_ARGS="--par-region hg19"
+		else
+			echo "Unsupported build type. Only the builts '37' and '38' are supported." >/dev/stderr
+			exit 1
+		fi
+
 		sed 's/^chr//' !{bim.baseName}.bim >tmp.bim
 
 		ln -s !{bed} tmp.bed
@@ -152,6 +173,7 @@ process regenie_step2 {
 			--bsize 200 \
 			$TRAIT_ARGS \
 			$TEST_ARGS \
+			$BUILT_ARGS \
 			--pThresh !{params.pthresh} \
 			--loocv	\
 			--pred !{predlist} \

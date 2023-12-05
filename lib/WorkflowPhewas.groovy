@@ -27,6 +27,11 @@ class WorkflowPhewas {
             System.exit(1)
         }
 
+        if (!(params.build == 37 || params.build == 38)) {
+            log.info  "Parameter 'build' can only be set to '37' or '38', exiting now."
+            System.exit(1)
+        }
+
         if(params.phenofile){
             if (!FileValidator.validateFile(params.phenofile)) {
                 log.info "Phenofile '${params.phenofile}' does not exist or is empty, exiting now."
