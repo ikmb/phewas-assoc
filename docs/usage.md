@@ -43,29 +43,27 @@ You will need to:
 
 The following list covers all parameters that may be specified for the Association Testing Pipeline:
 
-```
---input_imputed_glob [glob]     [REQUIRED] A glob expression to specify the .vcf.gz files that should be used
-                                    for association analysis
---fam [file.fam]                [REQUIRED] A Plink-style FAM file that will be used to select a
-                                    subset of samples from the provided VCFs
---phenofile                     [OPTIONAL] Phenotype file for multiple phenotype/traits-testing with regenie. 
-                                    Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2" Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA.
---trait [type]                  [ADVISED] Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case in the phenofile/fam.
---test [type]                   [ADVISED] Test algorithm. May be 'firth' (default) or 'spa'.
---collection_name [name]        [ADVISED] Output filename prefix
---output [directory]            [ADVISED] Output directory
---more_covars [covars.txt]      [OPTIONAL] whitespace-separated list of covariates. See above.
---more_covars_cols [COL1,COL2]  [OPTIONAL] comma-separated list of covar column header names
---null_filter [filter]          [OPTIONAL] bcftools-style formatted INFO filter for generation of
-                                    the null model. Default: "R2>0.8"
--resume                         [OPTIONAL] Restart where the pipeline was cancelled or aborted. May or may
-                                    not work, depending on your filesystem specifics
---additional_regenie_parameter  [OPTIONAL] Add additional parameters to step2 of regenie e.g. annotation and mask parameters 
-                                    for gene-based testing.
---pca_dims [integer]            [OPTIONAL] Define how many PCs should be calculated and included in association testing. Expects integer values. 0 would mean, no PCs will be calculated. Default is 10.
---plink_assoc                   [OPTIONAL] Perform association tests with plink2 --glm. 
---plink2_glm_options            [OPTIONAL] When performing plink2 --glm, adjust the --glm parameter with modifiers. Default: "omit-ref hide-covar"
-```
+
+| Category | Command | Type  | Description |
+| --- | --- | --- |  --- |
+| [REQUIRED] | `--input_imputed_glob` | [glob]  | A glob expression to specify the .vcf.gz files that should be used for association analysis |
+| [REQUIRED] | `--fam` | [filepath]  | A Plink-style FAM file that will be used to select a subset of samples from the provided VCFs |
+| [OPTIONAL] | `--phenofile` | [filepath]  | Phenotype file for multiple phenotype/traits-testing with regenie. Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2". Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA. |
+| [ADVISED] | `--trait` | [type]  | Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case in the phenofile/fam. |
+| [ADVISED] | `--test` | [type]  | Test algorithm. May be 'firth' (default) or 'spa'. |
+| [ADVISED] | `--collection_name` | [name] | Output filename prefix |
+| [ADVISED] | `--output` | [filepath]  | Output directory. Default: "output/assoc" |
+| [OPTIONAL] | `--more_covars` | [filepath] | Whitespace-separated list of covariates. Columnsheader "FID IID Covariate1 Covariate2". |
+| [OPTIONAL] | `--more_covars_cols` | [string] | A comma-separated list of covar column header names that should be used from the file that is used with `--more_covars`. Required when `--more_covars` is being used |
+| [OPTIONAL] | `--null_filter` | [string] | A bcftools-style formatted INFO filter for generation of the null model. Default: "R2>0.8" |
+| [OPTIONAL] | `--additional_regenie_parameter` | [string] | Add additional parameters to step2 of regenie e.g. annotation and mask parameters for gene-based testing. |
+| [OPTIONAL] | `--pca_dims` | [integer] | Define the limit of how many PCs should be calculated and included in association testing. Expects integer values. 0 would mean, no PCs will be calculated. Default is 10. |
+| [OPTIONAL] | `--plink_assoc` |  | Activation-switch to also perform association tests with plink2 --glm. |
+| [OPTIONAL] | `--plink2_glm_options` | [string] | When performing plink2 association testing, adjust the --glm parameter within plink2 with modifiers. Default: "omit-ref hide-covar". |
+| [OPTIONAL] | `--disable_regenie` |  | Deactivation-switch to deactivate association test calculation with regenie. |
+| [OPTIONAL] | `-resume` | | Activation-switch to restart where the pipeline was when cancelled or aborted. May or may not work, depending on your filesystem specifics. |
+
+
 ## Quick start on Kiel medcluster
 On medcluster you only need to load the dependencies Singularity and Nextflow. Then the pipeline can directly be executed.
 
@@ -76,6 +74,5 @@ On medcluster you only need to load the dependencies Singularity and Nextflow. T
     --input_imputed_glob "gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
     --fam "gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
     --collection_name "EXAMPLE" \
-    --output "output/Example/Assoc"
-    
-    ```
+    --output "output/Example/Assoc"   
+   ```
