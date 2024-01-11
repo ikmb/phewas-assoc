@@ -85,9 +85,9 @@ workflow assoc{
 	//removed python part from the original prune process
 	prune_python_helper(merge_plink.out,
 						merge_r2.out )
-	prune( merge_plink.out,
-		   merge_r2.out,
-		   prune_python_helper.out )
+	prune(	merge_plink.out,
+			merge_r2.out,
+			prune_python_helper.out )
 
 //FLASHPCA2
 //TODO: Make PC generation optional if one wants to supply them via covariates file

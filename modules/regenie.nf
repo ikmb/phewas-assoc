@@ -193,7 +193,7 @@ process awk_regenie {
 	output:
 		path(regenie_newname)
 	shell:
-		regenie_newname = regenie_sumstats.getSimpleName() + '_awked.regenie.gz'
+		regenie_newname = regenie_sumstats.getSimpleName() + '_plainpvalue.regenie.gz'
 		'''
 		zcat !{regenie_sumstats} | gawk 'NR==1{$14="p.value"; $4="ALLELE1"; $5="ALLELE2"; $6="A2FREQ"; print $0}NR>1{$14=10**-$12; print $0}' |  gawk 'NR>1 {if($14>1) next} 1' | gzip > !{regenie_newname}
 		'''

@@ -1,7 +1,6 @@
 process plink2_assoc {
-    tag "${params.collection_name}_${phenotype}"
+    tag "${params.collection_name}_${phenotype}_${chrom}"
 	scratch params.scratch
-    //publishDir params.output, mode: 'copy'
     label 'plink2'
 
     input:
@@ -17,7 +16,7 @@ process plink2_assoc {
         def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar"
         def memory = task.memory.toMega()-1000
     """
-        plink2 --vcf ${vcf} dosage=GP \
+        plink2 --vcf ${vcf} \
             --threads ${task.cpus} \
             --memory $memory \
             --out ${output_name} \
@@ -28,6 +27,8 @@ process plink2_assoc {
             --pheno ${phenofile}
     """
 }
+//TODO: include dosage like so: --vcf 6.ap_prf.vcf.gz dosage=GP
+
 //MEM=${task.memory.toMega()-1000}
 process plink2_assoc_merge {
     tag "${params.collection_name}_${phenotype}"
@@ -41,17 +42,23 @@ process plink2_assoc_merge {
     output:
         tuple val(phenotype), path(merged_sumstats)
     shell:
-        merged_sumstats = phenotype + '_plink2_glm_sumstats.tbl'
+        merged_sumstats = phenotype + '_plink2_glm_sumstats.tsv.gz'
         
         '''
-        gawk 'BEGIN { firstfile = 1 }
-        FNR == 1 && firstfile == 1 {
-            header = $0
-            firstfile = 0
-            print header
-        }
-        FNR > 1 || FILENAME ~ /\\.glm$/ {
-            print $0
-        }' *.glm* | awk 'NR<2{print $0;next}{print $0| "sort -k1,1n -k2,2n"}' > !{merged_sumstats}
+        file_list=!{sumstats.join(',')}
+
+        header=$(head -n 1 !{sumstats[0]} | sed '/^\s*$/d')  
+
+        # Create the output file with the header
+        echo "$header" > tmp.tsv
+
+        #Cat in all files without their header line
+        for i in ${file_list//,/ }
+        do
+            awk 'NR > 1' "$i" >> tmp.tsv
+        done
+
+        awk 'NR<2{print $0;next}{print $0| "sort -k1,1n -k2,2n"}' tmp.tsv | gzip > !{merged_sumstats}
+
         '''
 }
