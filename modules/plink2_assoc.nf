@@ -32,7 +32,7 @@ process plink2_assoc {
 //MEM=${task.memory.toMega()-1000}
 process plink2_assoc_merge {
     tag "${params.collection_name}_${phenotype}"
-	scratch params.scratch
+	scratch false//params.scratch
     label 'base'
     publishDir params.output, mode: 'copy'
     
@@ -55,10 +55,18 @@ process plink2_assoc_merge {
         #Cat in all files without their header line
         for i in ${file_list//,/ }
         do
-            awk 'NR > 1' "$i" >> tmp.tsv
+            awk 'NR > 1' "$i" >> tmp2.tsv
         done
 
-        awk 'NR<2{print $0;next}{print $0| "sort -k1,1n -k2,2n"}' tmp.tsv | gzip > !{merged_sumstats}
+        #sort that all bp are in correct order, first chromosome sorting
+        awk 'NR<2{print $0;next}{print $0| "sort -k1,1n -k2,2n"}' tmp2.tsv 
+
+        #now split results into two files should there be chromosomes like "X" or "Y"
+        sed -e '/^[\\t\\v\\f ]*[^0-9]/ d' tmp2.tsv  | sort -bg > numbers.tsv
+        sed -e '/^[\\t\\v\\f ]*[0-9]/ d' tmp2.tsv  | sort -bd > others.tsv 
+
+        #now merge first header, then numerical chromosomes and then alphabetical chromosomes
+        cat tmp.tsv numbers.tsv others.tsv | gzip > !{merged_sumstats}
 
         '''
 }
