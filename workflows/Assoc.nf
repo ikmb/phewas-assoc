@@ -25,6 +25,9 @@ include {	regenie_step1;
 			awk_regenie
 		} from '../modules/regenie.nf'
 
+include {	saige_step1;
+			saige_step2} from '../modules/saige.nf'
+
 include { prune_python_helper } from '../modules/python2.nf'
 
 //function definitions
@@ -171,6 +174,15 @@ workflow assoc{
 		ch_regenie2_input = ch_regenie_plink.combine(regenie_step1.out)
 		regenie_step2( ch_regenie2_input )
 		awk_regenie( regenie_step2.out.sumstat )
+	}
+
+	if(params.saige){
+		ch_saige1_input = prune.out.combine(ch_covars).combine(ch_pheno)
+		//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
+		saige_step1( ch_regenie1_input )
+
+		ch_saige2_input = ch_regenie_plink.combine(regenie_step1.out)
+		saige_step2( ch_regenie2_input )
 	}
 
 	if(params.plink_assoc){

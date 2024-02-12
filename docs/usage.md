@@ -1,7 +1,7 @@
 # Usage information
 
 ## Quick Start
-1. Install and make sure, Singularity (now Apptainer) and Nextflow are working. For example via [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html):
+1. Install and make sure, Singularity (now Apptainer) and Nextflow are working. For example via [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html):
     ```bash
     # Create a new conda environment for Singularity and Nextflow
     conda create --name nf_env -c conda-forge -c bioconda singularity nextflow
@@ -61,6 +61,7 @@ The following list covers all parameters that may be specified for the Associati
 | [OPTIONAL] | `--plink_assoc` |  | Activation-switch to also perform association tests with plink2 --glm. |
 | [OPTIONAL] | `--plink2_glm_options` | [string] | When performing plink2 association testing, adjust the --glm parameter within plink2 with modifiers. Default: "omit-ref hide-covar". |
 | [OPTIONAL] | `--disable_regenie` |  | Deactivation-switch to deactivate association test calculation with regenie. |
+| [EXPERIMENTAL] | `--regenie_step1_input` |  | Use a different plink fileset (bim/bed/fam) as input for regenie in step1. Default: false. Input must be the path to the fileset prefix (e.g. for prefix.bed + prefix.bim + prefix.fam it would be "--regenie_step1_input prefix") |
 | [OPTIONAL] | `-resume` | | Activation-switch to restart where the pipeline was when cancelled or aborted. May or may not work, depending on your filesystem specifics. |
 
 

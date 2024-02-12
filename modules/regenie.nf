@@ -14,7 +14,7 @@ process phenofile_from_fam {
 	#gawk  'NR==1  {print "FID\tIID\tPhenotype"}{print "0\t"$1"_"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
 	#gawk  'NR==1  {print "FID\tIID\tPhenotype"}{print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
 	#gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
-	gawk  'NR==1  {print "FID\tIID\tPhenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} if($6=="-9") {$6="NA";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
+	gawk  'NR==1  {print "FID\tIID\tphenotype"}{if($1!="0") {$2=$1"_"$2; $1="0";} if($6=="-9") {$6="NA";} print $1"\t"$2"\t"$6}' !{assocfam} > phenotype.txt #-v 'OFS= '  -F '\t'
 	'''
 }
 
@@ -65,26 +65,28 @@ process regenie_step1 {
 		tuple path('fit_bin_out_*.loco*'), path('fit_bin_out_pred.list'), path(covars), path(covars_cols), val(meta), path(phenofile)
 
 	when: meta.valid
-	shell:
-	'''
-	sed 's/^chr//' !{bim.baseName}.bim >tmp.bim
+	script:
+	def step1input = params.regenie_step1_input ? "${params.regenie_step1_input}" : "tmp"
 
-	ln -s !{bed} tmp.bed
-	ln -s !{fam} tmp.fam
+	"""
+	sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
+
+	ln -s ${bed} tmp.bed
+	ln -s ${fam} tmp.fam
 
 	export R_LIBS_USER=/dev/null
-	if [ "!{params.trait}" == "binary" ]; then
+	if [ "${params.trait}" == "binary" ]; then
 		TRAIT_ARGS="--bt --cc12"
-	elif [ "!{params.trait}" == "quantitative" ]; then
+	elif [ "${params.trait}" == "quantitative" ]; then
 		TRAIT_ARGS="--qt --apply-rint"
 	else
 		echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
 		exit 1
 	fi
 
-	if [ "!{params.build}" == "37" ]; then
+	if [ "${params.build}" == "37" ]; then
 		BUILT_ARGS="--par-region hg37"
-	elif [ "!{params.build}" == "38" ]; then
+	elif [ "${params.build}" == "38" ]; then
 		BUILT_ARGS="--par-region hg38"
 	else
 		echo "Unsupported build type. Only the builts '37' and '38' are supported." >/dev/stderr
@@ -93,22 +95,22 @@ process regenie_step1 {
 
 	regenie \
 		--step 1 \
-		--bed tmp \
-		--threads !{task.cpus} \
-		--covarFile !{covars} \
-		--covarCol $(cat !{covars_cols}) \
-		--phenoFile !{phenofile} \
+		--bed $step1input \
+		--threads ${task.cpus} \
+		--covarFile ${covars} \
+		--covarCol \$(cat ${covars_cols}) \
+		--phenoFile ${phenofile} \
 		--use-relative-path \
 		--bsize 100 \
-		$TRAIT_ARGS \
-		$BUILT_ARGS \
+		\$TRAIT_ARGS \
+		\$BUILT_ARGS \
 		--lowmem \
 		--loocv	\
 		--lowmem-prefix tmp_rg \
-		!{params.additional_regenie_parameter} \
+		${params.additional_regenie_parameter} \
 		--out fit_bin_out \
 		--gz
-	'''
+	"""
 }
 //--phenoCol "Phenotype" \
 
