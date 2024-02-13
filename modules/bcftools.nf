@@ -9,16 +9,18 @@ process gen_r2_list {
     output:
         path("r2-include.${chrom}")
 
-	shell:
-        '''
+	script:
+    def bcftoolfilter = params.additional_bcftools_arg ? "${params.additional_bcftools_arg}" : ""
+
+        """
         set +e
-        bcftools query -i '!{params.null_filter}' -f '%CHROM:%POS:%REF:%ALT\\n' !{vcf} >r2-include.!{chrom}
-        if [ $? -ne 0 ]; then
+        bcftools query $bcftoolfilter -i '${params.null_filter}' -f '%CHROM:%POS:%REF:%ALT\\n' ${vcf} >r2-include.${chrom}
+        if [ \$? -ne 0 ]; then
             echo Filter not found or genotyped-only data available.
-            bcftools query -f '%CHROM:%POS:%REF:%ALT\\n' !{vcf} >r2-include.!{chrom}
+            bcftools query -f '%CHROM:%POS:%REF:%ALT\\n' ${vcf} >r2-include.${chrom}
         fi
         exit 0
-        '''
+        """
 }
 
 process split_vcf_ranges {

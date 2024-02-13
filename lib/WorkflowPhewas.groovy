@@ -41,6 +41,16 @@ class WorkflowPhewas {
             log.info "Phenofile contains ${rows} rows"
         }
 
+        if(params.regenie_step1_input){
+            def bed = params.regenie_step1_input + '.bed'
+            def bim = params.regenie_step1_input + '.bim'
+            def fam = params.regenie_step1_input + '.fam'
+            if (!FileValidator.validateFile(${bed}) || !FileValidator.validateFile(${bim}) || !FileValidator.validateFile(${fam}) ) {
+                log.info "The plink fileset with prefix '${params.phenofile}' .bim .bed and .fam  for regenie step 1 do not exist, are not complete or are empty, exiting now."
+                System.exit(1)
+            }
+        }
+
 //TODO: more_covars is "." as default
         if(params.more_covars && params.more_covars != "."){
             if (!FileValidator.validateFile(params.more_covars)) {
@@ -93,7 +103,7 @@ class WorkflowPhewas {
 }
 
 class FileValidator {
-    
+
     def static validateFile(def filePath) {
         def file = new File(filePath)
         
