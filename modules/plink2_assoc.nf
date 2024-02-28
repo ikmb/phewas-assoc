@@ -1,29 +1,40 @@
 process plink2_assoc {
     tag "${params.collection_name}_${phenotype}_${chrom}"
-	scratch params.scratch
+	scratch false//params.scratch
     label 'plink2'
 
     input:
     tuple val(meta), path(phenofile), path(vcf), path(tbi), val(chrom), val(filetype), path(covars), path(covars_cols)
+    each path(fam)
 
     output:
         path('*'), emit: all
         tuple val(phenotype), path('*.glm*'), emit: plinksumstats
-    when: meta.valid
+    when: 
+        meta.valid
     script:
         phenotype = phenofile.getSimpleName()
         output_name = chrom + '.plink2_assoc_' + phenotype
-        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar"
+        //allow-no-covars 
+        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar --mac 20"
         def memory = task.memory.toMega()-1000
     """
+        #Create a fam file to update sex information
+        echo "#FID IID PAT MAT SEX PHE" >new-fam
+        awk '{\$3="0";\$4="0";if(\$1!="0") {\$2=\$1"_"\$2; \$1="0";} print \$0}' ${fam} >>new-fam
+
         plink2 --vcf ${vcf} \
             --threads ${task.cpus} \
             --memory $memory \
+            --update-sex new-fam \
             --out ${output_name} \
+            --chr ${chrom} \
+            --allow-extra-chr \
             $glmoptions \
             --pheno-name ${phenotype} \
             --covar ${params.collection_name}.covars \
             --covar-name \$(cat ${covars_cols}) \
+            --split-par "b${params.build}" \
             --pheno ${phenofile}
     """
 }

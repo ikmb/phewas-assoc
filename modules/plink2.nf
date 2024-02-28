@@ -38,47 +38,72 @@ process make_plink {
     tag "${params.collection_name}.$chrom"
 
     input:
-    tuple path(vcf), path(tbi), val(chrom), val(filetype)
-    each path(fam)
+        tuple path(vcf), path(tbi), val(chrom), val(filetype)
+        each path(fam)
 
     output:
-    tuple path("${params.collection_name}.${chrom}.bed"), path("${params.collection_name}.${chrom}.bim"), path("${params.collection_name}.${chrom}.fam"), path("${params.collection_name}.${chrom}.log"),val(chrom) //into for_liftover, for_merge_b38
+        tuple path("${params.collection_name}.${chrom}.bed"), path("${params.collection_name}.${chrom}.bim"), path("${params.collection_name}.${chrom}.fam"), path("${params.collection_name}.${chrom}.log"),val(chrom) //into for_liftover, for_merge_b38
 
-shell:
-    if (params.fam) {  
-        '''
-        # Generate double-id FAM
-        MEM=!{task.memory.toMega()-1000}
+    script:
+        def MEM=task.memory.toMega()-1000
+        if (params.fam) {  
+            """
+            # Generate double-id FAM
+            
 
-        #this was gawk originally:
-        awk '{$3="0";$4="0";if($1!="0") {$2=$1"_"$2; $1="0";} print $0}' !{fam} >new-fam
-        #awk '{if($1!="0") {$1="0";} print $0}' !{fam} >new-fam
+            #this was gawk originally:
+            awk '{\$3="0";\$4="0";if(\$1!="0") {\$2=\$1"_"\$2; \$1="0";} print \$0}' ${fam} >new-fam
+            #awk '{if(\$1!="0") {\$1="0";} print \$0}' ${fam} >new-fam
 
-        plink2 --vcf !{vcf} --const-fid 0 --memory $MEM --max-alleles 2 --keep-nosex --pheno new-fam --pheno-col-nums 4 --update-sex new-fam col-num=3 --output-chr chrM --make-bed --out !{params.collection_name}.!{chrom}
+            plink2  --vcf ${vcf} \
+                    --const-fid 0 \
+                    --memory $MEM \
+                    --max-alleles 2 \
+                    --keep-nosex \
+                    --chr ${chrom} \
+                    --allow-extra-chr \
+                    --pheno new-fam \
+                    --pheno-col-nums 4 \
+                    --update-sex new-fam col-num=3 \
+                    --split-par "b${params.build}" \
+                    --output-chr chrM \
+                    --make-bed \
+                    --out ${params.collection_name}.${chrom}
 
-        mv !{params.collection_name}.!{chrom}.bim old_bim
+            mv ${params.collection_name}.${chrom}.bim old_bim
 
-        #this was gawk originally:
-        awk '$1 !~ /^chr/ {$1="chr"$1} {$2=$1":"$4":"$6":"$5; print}' <old_bim >!{params.collection_name}.!{chrom}.bim
-        # Might need some "chr" prefixing here
-        '''
-    }else{
-        '''
-        # Generate double-id FAM
-        MEM=!{task.memory.toMega()-1000}
-        #this was gawk originally:
-        awk '{if($1!="0") {$2=$1"_"$2; $1="0";} print $1" "$2" "$3}' !{fam} >new-fam
-        #awk '{if($1!="0") {$1="0";} print $0}' !{fam} >new-fam
+            #this was gawk originally:
+            awk '\$1 !~ /^chr/ {\$1="chr"\$1} {\$2=\$1":"\$4":"\$6":"\$5; print}' <old_bim >${params.collection_name}.${chrom}.bim
+            # Might need some "chr" prefixing here
+            """
+        }else{
+            """
+            # Generate double-id FAM
+            #this was gawk originally:
+            awk '{if(\$1!="0") {\$2=\$1"_"\$2; \$1="0";} print \$1" "\$2" "\$3}' ${fam} >new-fam
+            #awk '{if(\$1!="0") {\$1="0";} print \$0}' !{fam} >new-fam
 
-        plink2 --vcf !{vcf} --const-fid 0 --memory $MEM --max-alleles 2 --keep-nosex --pheno new-fam --pheno-col-nums 1  --output-chr chrM --make-bed --out !{params.collection_name}.!{chrom}
+            plink2  --vcf ${vcf} \
+                    --const-fid 0 \
+                    --memory $MEM \
+                    --max-alleles 2 \
+                    --keep-nosex \
+                    --chr ${chrom} \
+                    --allow-extra-chr \
+                    --pheno new-fam \
+                    --pheno-col-nums 1 \
+                    --split-par "b${params.build}" \
+                    --output-chr chrM \
+                    --make-bed \
+                    --out ${params.collection_name}.${chrom}
 
-        mv !{params.collection_name}.!{chrom}.bim old_bim
+            mv ${params.collection_name}.${chrom}.bim old_bim
 
-        #this was gawk originally:
-        awk '$1 !~ /^chr/ {$1="chr"$1} {$2=$1":"$4":"$6":"$5; print}' <old_bim >!{params.collection_name}.!{chrom}.bim
-        # Might need some "chr" prefixing here
-        '''
-    }
+            #this was gawk originally:
+            awk '\$1 !~ /^chr/ {\$1="chr"\$1} {\$2=\$1":"\$4":"\$6":"\$5; print}' <old_bim >${params.collection_name}.${chrom}.bim
+            # Might need some "chr" prefixing here
+            """
+        }
 }
 
 process merge_plink {
@@ -100,8 +125,18 @@ process merge_plink {
 		MEM=!{task.memory.toMega()-1000}
 		FIRSTNAME=$(ls *.bed | xargs -i -- basename {} .bed | tail -n +1 | head -n 1)
         
-        plink2 --bfile $FIRSTNAME --threads !{task.cpus} --memory $MEM --pmerge-list merge-list bfile --make-bed --keep-nosex --indiv-sort none --output-chr 26 --chr 1-22, X, MT, par1, par2 --out !{params.collection_name}
+        plink2  --bfile $FIRSTNAME \
+                --threads !{task.cpus} \
+                --memory $MEM \
+                --pmerge-list merge-list bfile \
+                --make-bed \
+                --keep-nosex \
+                --indiv-sort none \
+                --output-chr 26 \
+                --chr 1-22, X, MT, par1, par2 \
+                --out !{params.collection_name}
         #trying to remake the plink1.9 output with parameter --output-chr 26
         #remove CHR Y as regenie cannot handle it
     '''
 }
+// TODO: ADD "--sort-vars", needs a pgen output first, that needs then to be sorted and only then output with --make-bed
