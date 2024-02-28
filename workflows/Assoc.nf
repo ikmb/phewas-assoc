@@ -178,7 +178,7 @@ workflow assoc{
 	}
 
 	if(params.saige){
-		ch_saige1_input = prune.out.combine(ch_covars).combine(ch_pheno)
+		ch_saige1_input = ch_regenie_plink.combine(ch_covars).combine(ch_pheno)
 		//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
 		saige_step1( ch_saige1_input )
 

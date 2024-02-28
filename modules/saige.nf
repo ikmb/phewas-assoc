@@ -7,7 +7,7 @@ process saige_step1 {
 	input:
 		tuple path(bed), path(bim), path(fam), path(logfile), path(covars), path(covars_cols), val(meta), path(phenofile)
 	output:
-		tuple val(phenoflag), val(meta), path(bed), path(bim), path(fam), path(saigeoutput), path(saigevariance)
+		tuple val(phenoflag), val(meta), path(bed), path(bim), path(fam), path(saigeoutput), path(saigevariance), path('*.sparseGRM.mtx'), path('*.sampleIDs.txt')
 	when: meta.valid
 	script:
 		def step1input = params.regenie_step1_input ? "${params.regenie_step1_input}" : "tmp"
@@ -29,6 +29,13 @@ process saige_step1 {
 
 	Rscript ${projectDir}/bin/combine_col_pheno.R ${phenofile} ${covars} ${params.trait} ${saige_covars}
 
+	Rscript /usr/local/bin/createSparseGRM.R       \
+		--plinkFile=$step1input \
+		--nThreads=${task.cpus}  \
+		--outputPrefix=sparseGRM       \
+		--numRandomMarkerforSparseKin=2000      \
+		--relatednessCutoff=0.125
+
     Rscript /usr/local/bin/step1_fitNULLGLMM.R     \
         --plinkFile=$step1input  \
         --phenoFile=$saige_covars \
@@ -39,6 +46,9 @@ process saige_step1 {
         --outputPrefix=./${phenofile.getSimpleName()} \
         --nThreads=${task.cpus}	\
         --IsOverwriteVarianceRatioFile=TRUE \
+		--useSparseGRMtoFitNULL=TRUE \
+		--sparseGRMFile sparseGRM_relatednessCutoff_0.125_2000_randomMarkersUsed.sparseGRM.mtx \
+		--sparseGRMSampleIDFile sparseGRM_relatednessCutoff_0.125_2000_randomMarkersUsed.sparseGRM.mtx.sampleIDs.txt \
 		$raretestoption
 	"""
 }
@@ -51,20 +61,20 @@ process saige_step2 {
 	cache 'lenient'
 
 	input:
-		tuple val(phenoflag), val(meta), path(bed), path(bim), path(fam), path(saigeoutput), path(saigevariance)
+		tuple val(phenoflag), val(meta), path(bed), path(bim), path(fam), path(saigeoutput), path(saigevariance), path(grm_matrix), path(grm_sampleid)
 	output:
 		path(outprefix)
 	when: meta.valid
 	shell:
 		outprefix = params.collection_name + '_' + phenoflag + '_saige.txt'// + params.test
-		def raretestoption = params.saige_test_rare ? "---minMAF=0 --minMAC=0.5 --cateVarRatioMaxMACVecInclude=10.5,20.5,30.5 --cateVarRatioMinMACVecExclude=5.5,10.5,20.5" : "--minMAF=0 --minMAC=20"
+		def raretestoption = params.saige_test_rare ? "---minMAF=0 --minMAC=0.5 --cateVarRatioMaxMACVecInclude=10.5,20.5,30.5 --cateVarRatioMinMACVecExclude=5.5,10.5,20.5" : "--minMAF=0 --minMAC=1"
 
 		"""
+		#step2
 		Rscript /usr/local/bin/step2_SPAtests.R \
 			--bimFile=$bim \
 			--bedFile=$bed \
 			--famFile=$fam \
-			--AlleleOrder=ref-first \
 			--SAIGEOutputFile=${outprefix} \
 			--GMMATmodelFile=${saigeoutput} \
 			--varianceRatioFile=${saigevariance}	\
@@ -72,6 +82,8 @@ process saige_step2 {
 			--pCutoffforFirth=0.05 \
 			--is_output_moreDetails=TRUE    \
 			--LOCO=FALSE \
+			--sparseGRMFile=$grm_matrix \
+			--sparseGRMSampleIDFile=$grm_sampleid \
 			$raretestoption
 		"""
 }
