@@ -1,6 +1,6 @@
 process plink2_assoc {
     tag "${params.collection_name}_${phenotype}_${chrom}"
-	scratch false//params.scratch
+	scratch params.scratch
     label 'plink2'
 
     input:
