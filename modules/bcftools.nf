@@ -14,10 +14,10 @@ process gen_r2_list {
 
         """
         set +e
-        bcftools query $bcftoolfilter -i '${params.null_filter}' -f '%CHROM:%POS:%REF:%ALT\\n' ${vcf} >r2-include.${chrom}
+        bcftools view $bcftoolfilter ${vcf} | bcftools query -i '${params.null_filter}' -f '%CHROM:%POS:%REF:%ALT\\n' >r2-include.${chrom}
         if [ \$? -ne 0 ]; then
             echo Filter not found or genotyped-only data available.
-            bcftools query -f '%CHROM:%POS:%REF:%ALT\\n' ${vcf} >r2-include.${chrom}
+            bcftools view $bcftoolfilter ${vcf} | bcftools query -f '%CHROM:%POS:%REF:%ALT\\n' >r2-include.${chrom}
         fi
         exit 0
         """
