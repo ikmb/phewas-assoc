@@ -53,7 +53,7 @@ process plink2_assoc_merge {
     output:
         tuple val(phenotype), path(merged_sumstats)
     shell:
-        merged_sumstats = phenotype + '_plink2_glm_sumstats.tsv.gz'
+        merged_sumstats = params.collection_name + '_' + phenotype + '_plink2_glm_sumstats.tsv.gz'
         
         '''
         file_list=!{sumstats.join(',')}
