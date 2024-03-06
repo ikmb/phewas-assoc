@@ -16,7 +16,7 @@ process plink2_assoc {
         phenotype = phenofile.getSimpleName()
         output_name = chrom + '.plink2_assoc_' + phenotype
         //allow-no-covars 
-        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar --mac 20"
+        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar no-x-sex --mac 20"
         def memory = task.memory.toMega()-1000
     """
         #Create a fam file to update sex information
