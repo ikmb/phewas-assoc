@@ -45,8 +45,15 @@ class WorkflowPhewas {
             def bed = params.regenie_step1_input + '.bed'
             def bim = params.regenie_step1_input + '.bim'
             def fam = params.regenie_step1_input + '.fam'
-            if (!FileValidator.validateFile(${bed}) || !FileValidator.validateFile(${bim}) || !FileValidator.validateFile(${fam}) ) {
-                log.info "The plink fileset with prefix '${params.phenofile}' .bim .bed and .fam  for regenie step 1 do not exist, are not complete or are empty, exiting now."
+            if (!FileValidator.validateFile(bed) || !FileValidator.validateFile(bim) || !FileValidator.validateFile(fam) ) {
+                log.info "The plink fileset with prefix '${params.phenofile}' .bim .bed and .fam for regenie step 1 do not exist, are not complete or are empty, exiting now."
+                System.exit(1)
+            }
+        }
+
+        if(!(params.more_covars && params.more_covars != ".")){
+            if(params.cat_covars){
+                log.info"Category covars were used with --cat_covars '${params.cat_covars}', but --more_covars is empty and should contain at least the supplied categorical covars, exiting now."
                 System.exit(1)
             }
         }
@@ -79,7 +86,7 @@ class WorkflowPhewas {
             }
         }    
 
-        if (!params.pca_dims == 0) {
+        if (params.pca_dims==0) {
             log.info "No PCA step will be performed."
         }
 /*

@@ -67,50 +67,74 @@ process regenie_step1 {
 	when: meta.valid
 	script:
 	def step1input = params.regenie_step1_input ? "${params.regenie_step1_input}" : "tmp"
+	def catcovars = params.cat_covars ? "--catCovarList ${params.cat_covars}" : ""
+	def TRAIT_ARGS = ''
+		TRAIT_ARGS =  	(params.trait == 'binary') ? '--bt --cc12' :
+						(params.trait == 'quantitative') ? '--qt --apply-rint' : ''
+	def BUILT_ARGS = ''
+		BUILT_ARGS =  	(params.build == '37') ? '--par-region hg37' :
+						(params.build == '38') ? '--par-region hg38' : ''
+	if (!params.regenie_step1_input) {  
+		"""
+		sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
 
-	"""
-	sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
+		ln -s ${bed} tmp.bed
+		ln -s ${fam} tmp.fam
 
-	ln -s ${bed} tmp.bed
-	ln -s ${fam} tmp.fam
+		export R_LIBS_USER=/dev/null
 
-	export R_LIBS_USER=/dev/null
-	if [ "${params.trait}" == "binary" ]; then
-		TRAIT_ARGS="--bt --cc12"
-	elif [ "${params.trait}" == "quantitative" ]; then
-		TRAIT_ARGS="--qt --apply-rint"
-	else
-		echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
-		exit 1
-	fi
+		regenie \
+			--step 1 \
+			--bed $step1input \
+			--threads ${task.cpus} \
+			--covarFile ${covars} \
+			--covarCol \$(cat ${covars_cols}) \
+			$catcovars \
+			--phenoFile ${phenofile} \
+			--use-relative-path \
+			--bsize 100 \
+			$TRAIT_ARGS \
+			$BUILT_ARGS \
+			--lowmem \
+			--loocv	\
+			--lowmem-prefix tmp_rg \
+			${params.additional_regenie_parameter} \
+			--out fit_bin_out \
+			--gz
+			"""
+	} else {
+		"""
+		sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
+		ln -s ${bed} tmp.bed
+		ln -s ${fam} tmp.fam
 
-	if [ "${params.build}" == "37" ]; then
-		BUILT_ARGS="--par-region hg37"
-	elif [ "${params.build}" == "38" ]; then
-		BUILT_ARGS="--par-region hg38"
-	else
-		echo "Unsupported build type. Only the builts '37' and '38' are supported." >/dev/stderr
-		exit 1
-	fi
 
-	regenie \
-		--step 1 \
-		--bed $step1input \
-		--threads ${task.cpus} \
-		--covarFile ${covars} \
-		--covarCol \$(cat ${covars_cols}) \
-		--phenoFile ${phenofile} \
-		--use-relative-path \
-		--bsize 100 \
-		\$TRAIT_ARGS \
-		\$BUILT_ARGS \
-		--lowmem \
-		--loocv	\
-		--lowmem-prefix tmp_rg \
-		${params.additional_regenie_parameter} \
-		--out fit_bin_out \
-		--gz
-	"""
+		sed 's/^chr//' ${params.regenie_step1_input}.bim >tmp_input.bim
+		ln -s ${params.regenie_step1_input}.bed tmp_input.bed
+		ln -s ${params.regenie_step1_input}.fam tmp_input.fam
+
+		export R_LIBS_USER=/dev/null
+
+		regenie \
+			--step 1 \
+			--bed tmp_input \
+			--threads ${task.cpus} \
+			--covarFile ${covars} \
+			--covarCol \$(cat ${covars_cols}) \
+			$catcovars \
+			--phenoFile ${phenofile} \
+			--use-relative-path \
+			--bsize 100 \
+			$TRAIT_ARGS \
+			$BUILT_ARGS \
+			--lowmem \
+			--loocv	\
+			--lowmem-prefix tmp_rg \
+			${params.additional_regenie_parameter} \
+			--out fit_bin_out \
+			--gz
+		"""
+	}
 }
 //--phenoCol "Phenotype" \
 
@@ -121,68 +145,53 @@ process regenie_step2 {
 	publishDir params.output, mode: 'copy'
 	cache 'lenient'
 
-
 	input:
 		tuple path(bed), path(bim), path(fam), path(logfile), path(locofiles), path(predlist), path(covars), path(covars_cols), val(meta), path(phenofile)
 	output:
 		path("${params.collection_name}_regenie_${params.test}*"), emit: regenie_allout
 		path("*.regenie.gz"), emit: sumstat
 	when: meta.valid
-	shell:
+	script:
+		def catcovars = params.cat_covars ? "--catCovarList ${params.cat_covars}" : ""
 		outprefix = params.collection_name + '_regenie_' + params.test
-		'''
-		if [ "!{params.trait}" == "binary" ]; then
-			TRAIT_ARGS="--bt --cc12"
-		elif [ "!{params.trait}" == "quantitative" ]; then
-			TRAIT_ARGS="--qt --apply-rint"
-		else
-			echo "Unsupported trait type. Only 'binary' and 'quantitative' traits are supported." >/dev/stderr
-			exit 1
-		fi
 
-		if [ "!{params.test}" == "firth" ]; then
-			TEST_ARGS="--firth --approx"
-		elif [ "!{params.test}" == "spa" ]; then
-			TEST_ARGS="--spa"
-		else
-			echo "Unsupported test type. Only 'firth' and 'spa' tests are supported." >/dev/stderr
-			exit 1
-		fi
+		def TRAIT_ARGS = ''
+			TRAIT_ARGS =  	(params.trait == 'binary') ? '--bt --cc12' :
+							(params.trait == 'quantitative') ? '--qt --apply-rint' : ''
+		def BUILT_ARGS = ''
+			BUILT_ARGS =  	(params.build == '37') ? '--par-region hg37' :
+							(params.build == '19') ? '--par-region hg19' :
+							(params.build == '38') ? '--par-region hg38' : ''
 
-		if [ "!{params.build}" == "37" ]; then
-			BUILT_ARGS="--par-region hg19"
-		elif [ "!{params.build}" == "38" ]; then
-			BUILT_ARGS="--par-region hg38"
-		elif [ "!{params.build}" == "19" ]; then
-			BUILT_ARGS="--par-region hg19"
-		else
-			echo "Unsupported build type. Only the builts '37' and '38' are supported." >/dev/stderr
-			exit 1
-		fi
+		def TEST_ARGS = ''
+			TEST_ARGS = (params.test == 'firth') ? '--firth --approx' :
+						(params.test == 'spa') ? '--spa' : ''
 
-		sed 's/^chr//' !{bim.baseName}.bim >tmp.bim
+		"""
+		sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
 
-		ln -s !{bed} tmp.bed
-		ln -s !{fam} tmp.fam
+		ln -s ${bed} tmp.bed
+		ln -s ${fam} tmp.fam
 
 		regenie \
 			--step 2 \
 			--bed tmp \
-			--threads !{task.cpus} \
-			--covarFile !{covars} \
-			--covarCol $(cat !{covars_cols}) \
-			--phenoFile !{phenofile} \
+			--threads ${task.cpus} \
+			--covarFile ${covars} \
+			--covarCol \$(cat ${covars_cols}) \
+			$catcovars \
+			--phenoFile ${phenofile} \
 			--bsize 200 \
 			$TRAIT_ARGS \
 			$TEST_ARGS \
 			$BUILT_ARGS \
-			--pThresh !{params.pthresh} \
+			--pThresh ${params.pthresh} \
 			--loocv	\
-			--pred !{predlist} \
-			--out !{outprefix} \
-			!{params.additional_regenie_parameter} \
+			--pred ${predlist} \
+			--out ${outprefix} \
+			${params.additional_regenie_parameter} \
 			--gz
-		'''
+		"""
 }
 //#--covarCol PC{1:!{params.pca_dims}} \
 process awk_regenie {

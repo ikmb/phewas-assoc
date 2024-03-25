@@ -40,7 +40,6 @@ process plink2_assoc {
 }
 //TODO: include dosage like so: --vcf 6.ap_prf.vcf.gz dosage=GP
 
-//MEM=${task.memory.toMega()-1000}
 process plink2_assoc_merge {
     tag "${params.collection_name}_${phenotype}"
 	scratch params.scratch
