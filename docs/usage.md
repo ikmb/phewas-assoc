@@ -58,6 +58,7 @@ The following list covers all parameters that may be specified for the Associati
 | [OPTIONAL] | `--cat_covars` | [string] | A comma-separated list of covar column header names that are categorical. Required when `--more_covars` is being used and `--more_covars_cols` contains categorical covariates  |
 | [OPTIONAL] | `--null_filter` | [string] | A bcftools-style formatted INFO filter for generation of the null model. Default: "R2>0.8" |
 | [OPTIONAL] | `--additional_bcftools_arg` | [string] | A bcftools-style formatted view filter for removing variants from the association test, e.g. MAF filter with "-q 0.01:minor". Default: "" |
+| [OPTIONAL] | `--pruning_parameter` | [string] | Edit the variant pruning parameters for plink2. Input as a string first the windows size in kb, then the step size and at last the unphased hardcall r² threshold. See [Plink2's --indep-pairwise documentation](https://www.cog-genomics.org/plink/2.0/ld#indep) for more details. The pruned data is used for principle component calculation as well as for step1 in Regenie. Default: "50 5 0.2" |
 | [OPTIONAL] | `--additional_regenie_parameter` | [string] | Add additional parameters to step2 of regenie e.g. annotation and mask parameters for gene-based testing. |
 | [OPTIONAL] | `--pca_dims` | [integer] | Define the limit of how many PCs should be calculated and included in association testing. Expects integer values. 0 would mean, no PCs will be calculated. Default is 10. |
 | [OPTIONAL] | `--plink_assoc` |  | Activation-switch to also perform association tests with plink2 --glm. |
