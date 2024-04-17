@@ -7,7 +7,11 @@ args = commandArgs(trailingOnly=TRUE)
 fam <- read.table(args[1])
 colnames(fam) <- c("FID","IID","PAT","MAT","SEX","PHENO")
 covars <- read.table(args[2], header=T)
-covar_cols <- args[3] %>% strsplit(.,split=",") %>% unlist()
+#if(args[3] != ""){
+  covar_cols <- args[3] %>% strsplit(.,split=",") %>% unlist()
+#}else{
+#  covar_cols <- ""
+#}
 
 number_pcs <- args[5]
 withcovars <- args[6] %>% as.logical()

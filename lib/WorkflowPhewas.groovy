@@ -65,6 +65,11 @@ class WorkflowPhewas {
                 System.exit(1)
             }
 
+            if(!params.more_covars_cols){
+                log.info"A covars file was supplied with --more_covars, but --more_covars_cols is empty or nut supplied. Supply at least one column! Exiting now."
+                System.exit(1)
+            }
+
             //Covariate file should contain the same amount of samples
             if(params.phenofile){
                 def phenorows = FileValidator.count_file_lines(params.phenofile)

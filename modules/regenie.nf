@@ -92,7 +92,7 @@ process regenie_step1 {
 			$catcovars \
 			--phenoFile ${phenofile} \
 			--use-relative-path \
-			--bsize 100 \
+			--bsize 1000 \
 			$TRAIT_ARGS \
 			$BUILT_ARGS \
 			--lowmem \
@@ -124,7 +124,7 @@ process regenie_step1 {
 			$catcovars \
 			--phenoFile ${phenofile} \
 			--use-relative-path \
-			--bsize 100 \
+			--bsize 1000 \
 			$TRAIT_ARGS \
 			$BUILT_ARGS \
 			--lowmem \
@@ -181,7 +181,7 @@ process regenie_step2 {
 			--covarCol \$(cat ${covars_cols}) \
 			$catcovars \
 			--phenoFile ${phenofile} \
-			--bsize 200 \
+			--bsize 1000 \
 			$TRAIT_ARGS \
 			$TEST_ARGS \
 			$BUILT_ARGS \

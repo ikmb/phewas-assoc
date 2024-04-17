@@ -41,3 +41,21 @@ process split_vcf_ranges {
         '''
 }
 
+process bcftoolsfilter {
+    tag "${params.collection_name}.${chrom}"
+	label 'bcftools'
+	scratch params.scratch
+    input:
+        tuple file(vcf), file(tbi), val(chrom), val(filetype)
+    output:
+        tuple file(outputname), file(outputname_tbi), val(chrom), val(filetype)
+
+    script:
+        def bcftoolfilter = params.additional_bcftools_arg ? "${params.additional_bcftools_arg}" : ""
+        outputname = chrom +  '_bcffiltered.vcf.gz'
+        outputname_tbi = chrom +  '_bcffiltered.vcf.gz.tbi'
+        """
+        bcftools view $bcftoolfilter ${vcf} -Oz --threads ${task.cpus} -o $outputname
+        bcftools index $outputname --tbi --threads ${task.cpus}
+        """
+}
