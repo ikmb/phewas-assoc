@@ -16,7 +16,7 @@ process plink2_assoc {
         phenotype = phenofile.getSimpleName()
         output_name = chrom + '.plink2_assoc_' + phenotype
         //allow-no-covars 
-        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar --mac 20"
+        def glmoptions = params.plink2_glm_options ? "--glm ${params.plink2_glm_options}" : "--glm omit-ref hide-covar no-x-sex --mac 20"
         def memory = task.memory.toMega()-1000
     """
         #Create a fam file to update sex information
@@ -40,7 +40,6 @@ process plink2_assoc {
 }
 //TODO: include dosage like so: --vcf 6.ap_prf.vcf.gz dosage=GP
 
-//MEM=${task.memory.toMega()-1000}
 process plink2_assoc_merge {
     tag "${params.collection_name}_${phenotype}"
 	scratch params.scratch
@@ -53,7 +52,7 @@ process plink2_assoc_merge {
     output:
         tuple val(phenotype), path(merged_sumstats)
     shell:
-        merged_sumstats = phenotype + '_plink2_glm_sumstats.tsv.gz'
+        merged_sumstats = params.collection_name + '_' + phenotype + '_plink2_glm_sumstats.tsv.gz'
         
         '''
         file_list=!{sumstats.join(',')}

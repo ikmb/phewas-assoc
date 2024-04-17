@@ -19,6 +19,7 @@ process saige_step1 {
 		saigevariance = phenofile.getSimpleName() + '.varianceRatio.txt'
 		phenoflag = phenofile.getSimpleName()
 		def raretestoption = params.saige_test_rare ? "--isCateVarianceRatio=TRUE --cateVarRatioMaxMACVecInclude=10.5,20.5,30.5 --cateVarRatioMinMACVecExclude=1.5,10.5,20.5" : "" //NOT TESTED
+		def catcovars = params.cat_covars ? "--qCovarColList=${params.cat_covars}" : ""
 	"""
 	export R_LIBS_USER=/dev/null
 
@@ -41,6 +42,7 @@ process saige_step1 {
         --phenoFile=$saige_covars \
         --phenoCol=${phenofile.getSimpleName()} \
         --covarColList=\$(cat ${covars_cols}) \
+		$catcovars \
         --sampleIDColinphenoFile=IID \
         $TRAIT_ARGS \
         --outputPrefix=./${phenofile.getSimpleName()} \

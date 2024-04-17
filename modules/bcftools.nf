@@ -14,10 +14,10 @@ process gen_r2_list {
 
         """
         set +e
-        bcftools query $bcftoolfilter -i '${params.null_filter}' -f '%CHROM:%POS:%REF:%ALT\\n' ${vcf} >r2-include.${chrom}
+        bcftools view $bcftoolfilter ${vcf} | bcftools query -i '${params.null_filter}' -f '%CHROM:%POS:%REF:%ALT\\n' >r2-include.${chrom}
         if [ \$? -ne 0 ]; then
             echo Filter not found or genotyped-only data available.
-            bcftools query -f '%CHROM:%POS:%REF:%ALT\\n' ${vcf} >r2-include.${chrom}
+            bcftools view $bcftoolfilter ${vcf} | bcftools query -f '%CHROM:%POS:%REF:%ALT\\n' >r2-include.${chrom}
         fi
         exit 0
         """
@@ -41,3 +41,21 @@ process split_vcf_ranges {
         '''
 }
 
+process bcftoolsfilter {
+    tag "${params.collection_name}.${chrom}"
+	label 'bcftools'
+	scratch params.scratch
+    input:
+        tuple file(vcf), file(tbi), val(chrom), val(filetype)
+    output:
+        tuple file(outputname), file(outputname_tbi), val(chrom), val(filetype)
+
+    script:
+        def bcftoolfilter = params.additional_bcftools_arg ? "${params.additional_bcftools_arg}" : ""
+        outputname = chrom +  '_bcffiltered.vcf.gz'
+        outputname_tbi = chrom +  '_bcffiltered.vcf.gz.tbi'
+        """
+        bcftools view $bcftoolfilter ${vcf} -Oz --threads ${task.cpus} -o $outputname
+        bcftools index $outputname --tbi --threads ${task.cpus}
+        """
+}
