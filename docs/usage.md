@@ -50,6 +50,7 @@ The following list covers all parameters that may be specified for the Associati
 | [OPTIONAL] | `--phenofile` | [filepath]  | Phenotype file for multiple phenotype/traits-testing with regenie. Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2". Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA. |
 | [ADVISED] | `--trait` | [type]  | Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case in the phenofile/fam. |
 | [ADVISED] | `--test` | [type]  | Test algorithm. May be 'firth' (default) or 'spa'. |
+| [ADVISED] | `--regenie_bsize` | [integer]  | Change in Regenie the size of the genotype blocks. Default: 1000 |           
 | [ADVISED] | `--build` | [integer] | Define the human genome build code. Valid numbers are 37 and 38. |
 | [ADVISED] | `--collection_name` | [name] | Output filename prefix |
 | [ADVISED] | `--output` | [filepath]  | Output directory. Default: "output/assoc" |
