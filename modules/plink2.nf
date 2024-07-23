@@ -13,6 +13,7 @@ process prune {
         tuple file("${params.collection_name}.pruned.bed"), file("${params.collection_name}.pruned.bim"), file("${params.collection_name}.pruned.fam"), file("${params.collection_name}.pruned.log")// into for_saige_null, for_liftover_pruned, for_generate_pcs
 
 	shell:
+    //def maf_filter = params.pruning_maf ? "--maf ${params.pruning_maf}" : ""
     '''
     echo Generating PCA SNP List file for variant selection
     R2=!{r2}
@@ -25,8 +26,8 @@ process prune {
         R2=new-r2
     fi
     plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract $R2 --indep-pairwise !{params.pruning_parameter} --out _prune
-    plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract _prune.prune.in --maf 0.05 --make-bed --out intermediate
-    plink2 --memory $MEM --threads !{task.cpus} --bfile intermediate --chr 1-22 --extract include-r2-variants --output-chr chrM --make-bed --out !{params.collection_name}.pruned
+    plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract _prune.prune.in --maf !{params.pruning_maf} --make-bed --out intermediate
+    plink2 --memory $MEM --threads !{task.cpus} --bfile intermediate --chr 1-25, X --extract include-r2-variants --output-chr chrM --make-bed --out !{params.collection_name}.pruned
     rm intermediate*
 '''
 }
@@ -133,7 +134,7 @@ process merge_plink {
                 --keep-nosex \
                 --indiv-sort none \
                 --output-chr 26 \
-                --chr 1-22, X, MT, par1, par2 \
+                --chr 1-25, X, MT, par1, par2 \
                 --out !{params.collection_name}
         #trying to remake the plink1.9 output with parameter --output-chr 26
         #remove CHR Y as regenie cannot handle it
