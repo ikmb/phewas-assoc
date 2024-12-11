@@ -47,10 +47,13 @@ The following list covers all parameters that may be specified for the Associati
 | --- | --- | --- |  --- |
 | [REQUIRED] | `--input_imputed_glob` | [glob]  | A glob expression to specify the .vcf.gz files that should be used for association analysis |
 | [REQUIRED] | `--fam` | [filepath]  | A Plink-style FAM file that will be used to select a subset of samples from the provided VCFs |
-| [OPTIONAL] | `--phenofile` | [filepath]  | Phenotype file for multiple phenotype/traits-testing with regenie. Tab separated file with columnsheader "FID IID Phenotype1 Phenotype2". Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA. |
+| [OPTIONAL] | `--phenofile` | [filepath]  | Phenotype file for multiple phenotype/traits-testing with regenie. Whitespace separated file with columnsheader "FID IID Phenotype1 Phenotype2". Entries must be "0" for FID, "FID_IID" for IID and all phenotypes must be either binary or quantitaive, don't mix! Missing Samples will be ignored. Binary traits should be specified as control=1,case=2,missing=NA. |
 | [ADVISED] | `--trait` | [type]  | Trait type to analyze. May be 'binary' (default) or 'quantitative'. For a binary trait use "1" as control and "2" as case in the phenofile/fam. |
 | [ADVISED] | `--test` | [type]  | Test algorithm. May be 'firth' (default) or 'spa'. |
+| [ADVISED] | `--regenie_bsize` | [integer]  | Change in Regenie the size of the genotype blocks. Default: 1000 |           
 | [ADVISED] | `--build` | [integer] | Define the human genome build code. Valid numbers are 37 and 38. |
+| [ADVISED] | `--autochroms` | [integer] | Define the number of autosomal chromosomes for regenie. Default is 22 |
+| [ADVISED] | `--split_PAR` | | Split the PAR region from X and Y chromosome, if the input already contains separated PAR files, set it to false. Default: false |
 | [ADVISED] | `--collection_name` | [name] | Output filename prefix |
 | [ADVISED] | `--output` | [filepath]  | Output directory. Default: "output/assoc" |
 | [OPTIONAL] | `--more_covars` | [filepath] | Whitespace-separated list of covariates. Columnsheader "FID IID Covariate1 Covariate2". |
@@ -59,11 +62,13 @@ The following list covers all parameters that may be specified for the Associati
 | [OPTIONAL] | `--null_filter` | [string] | A bcftools-style formatted INFO filter for generation of the null model. Default: "R2>0.8" |
 | [OPTIONAL] | `--additional_bcftools_arg` | [string] | A bcftools-style formatted view filter for removing variants from the association test, e.g. MAF filter with "-q 0.01:minor". Default: "" |
 | [OPTIONAL] | `--pruning_parameter` | [string] | Edit the variant pruning parameters for plink2. Input as a string first the windows size in kb, then the step size and at last the unphased hardcall r² threshold. See [Plink2's --indep-pairwise documentation](https://www.cog-genomics.org/plink/2.0/ld#indep) for more details. The pruned data is used for principle component calculation as well as for step1 in Regenie. Default: "50 5 0.2" |
+| [OPTIONAL] | `--pruning_maf` | [numeric] | Edit the MAF-filter for pruning. Acceptable values are from 0.01 up to 0.5. Default: 0.05. |
 | [OPTIONAL] | `--additional_regenie_parameter` | [string] | Add additional parameters to step2 of regenie e.g. annotation and mask parameters for gene-based testing. |
 | [OPTIONAL] | `--pca_dims` | [integer] | Define the limit of how many PCs should be calculated and included in association testing. Expects integer values. 0 would mean, no PCs will be calculated. Default is 10. |
 | [OPTIONAL] | `--plink_assoc` |  | Activation-switch to also perform association tests with plink2 --glm. |
 | [OPTIONAL] | `--plink2_glm_options` | [string] | When performing plink2 association testing, adjust the --glm parameter within plink2 with modifiers. Default: "omit-ref hide-covar". |
 | [OPTIONAL] | `--disable_regenie` |  | Deactivation-switch to deactivate association test calculation with regenie. |
+| [OPTIONAL] | `--plot_regenie` |  | Activation-switch to enable manhattan and qq plot creation from regenie results. |
 | [EXPERIMENTAL] | `--regenie_step1_input` |  | Use a different plink fileset (bim/bed/fam) as input for regenie in step1. Default: false. Input must be the path to the fileset prefix (e.g. for prefix.bed + prefix.bim + prefix.fam it would be "--regenie_step1_input prefix") |
 | [EXPERIMENTAL] | `--saige` |  | Enable Saige for association testing. |
 | [OPTIONAL] | `-resume` | | Activation-switch to restart where the pipeline was when cancelled or aborted. May or may not work, depending on your filesystem specifics. |

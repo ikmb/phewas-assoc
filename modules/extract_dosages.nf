@@ -5,7 +5,7 @@ process extract_dosage {
     label 'extract_dosage'
 
     input:
-    tuple file (gz), file(tbi), val(chrom), val(filetype)
+    tuple file (gz), file(tbi), val(chrom)
 
     output:
     tuple file("${chrom}.PLINKdosage.map"), file("${chrom}.PLINKdosage.gz"), val(chrom)

@@ -13,6 +13,7 @@ process prune {
         tuple file("${params.collection_name}.pruned.bed"), file("${params.collection_name}.pruned.bim"), file("${params.collection_name}.pruned.fam"), file("${params.collection_name}.pruned.log")// into for_saige_null, for_liftover_pruned, for_generate_pcs
 
 	shell:
+    //def maf_filter = params.pruning_maf ? "--maf ${params.pruning_maf}" : ""
     '''
     echo Generating PCA SNP List file for variant selection
     R2=!{r2}
@@ -25,8 +26,8 @@ process prune {
         R2=new-r2
     fi
     plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract $R2 --indep-pairwise !{params.pruning_parameter} --out _prune
-    plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract _prune.prune.in --maf 0.05 --make-bed --out intermediate
-    plink2 --memory $MEM --threads !{task.cpus} --bfile intermediate --chr 1-22 --extract include-r2-variants --output-chr chrM --make-bed --out !{params.collection_name}.pruned
+    plink2 --memory $MEM --threads !{task.cpus} --bed !{bed} --bim !{bim} --fam !{fam} --extract _prune.prune.in --maf !{params.pruning_maf} --make-bed --out intermediate
+    plink2 --memory $MEM --threads !{task.cpus} --bfile intermediate --chr 1-25, X --extract include-r2-variants --output-chr chrM --make-bed --out !{params.collection_name}.pruned
     rm intermediate*
 '''
 }
@@ -38,7 +39,7 @@ process make_plink {
     tag "${params.collection_name}.$chrom"
 
     input:
-        tuple path(vcf), path(tbi), val(chrom), val(filetype)
+        tuple path(vcf), path(tbi), val(chrom)
         each path(fam)
 
     output:
@@ -46,6 +47,8 @@ process make_plink {
 
     script:
         def MEM=task.memory.toMega()-1000
+        def par_split = params.split_PAR ? "--split-par b${params.build}" : ""
+        def CHROMFILTER = (chrom == "X" || chrom == "Y" || chrom == (params.autochroms.toInteger() + 1) ) ? "" : "--chr ${chrom}" 
         if (params.fam) {  
             """
             # Generate double-id FAM
@@ -60,16 +63,16 @@ process make_plink {
                     --memory $MEM \
                     --max-alleles 2 \
                     --keep-nosex \
-                    --chr ${chrom} \
+                    $CHROMFILTER \
                     --allow-extra-chr \
                     --pheno new-fam \
                     --pheno-col-nums 4 \
                     --update-sex new-fam col-num=3 \
-                    --split-par "b${params.build}" \
                     --output-chr chrM \
+                    $par_split \
+                    --threads ${task.cpus} \
                     --make-bed \
                     --out ${params.collection_name}.${chrom}
-
             mv ${params.collection_name}.${chrom}.bim old_bim
 
             #this was gawk originally:
@@ -95,6 +98,7 @@ process make_plink {
                     --split-par "b${params.build}" \
                     --output-chr chrM \
                     --make-bed \
+                    --threads ${task.cpus} \
                     --out ${params.collection_name}.${chrom}
 
             mv ${params.collection_name}.${chrom}.bim old_bim
@@ -133,7 +137,7 @@ process merge_plink {
                 --keep-nosex \
                 --indiv-sort none \
                 --output-chr 26 \
-                --chr 1-22, X, MT, par1, par2 \
+                --chr 1-25, X, MT, par1, par2 \
                 --out !{params.collection_name}
         #trying to remake the plink1.9 output with parameter --output-chr 26
         #remove CHR Y as regenie cannot handle it

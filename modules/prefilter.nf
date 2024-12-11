@@ -11,11 +11,11 @@ process prefilter {
 
     input:
         val(readystate)
-        tuple path(vcf), val(filetype)
+        path(vcf)
         each path(inc_fam)
 
     output:
-    tuple path("*.ap_prf.vcf.gz"), path("*.ap_prf.vcf.gz.tbi"), val(filetype) //into for_extract_chromosome_code //for_split_vcf, for_extract_dosage, for_gen_r2, for_plink_imp
+    path("*.ap_prf.vcf.gz*") //into for_extract_chromosome_code //for_split_vcf, for_extract_dosage, for_gen_r2, for_plink_imp
 
     shell:
     '''
@@ -34,17 +34,36 @@ process prefilter {
     REMOVE_COUNT=$(comm -23 vcf-samples fam-samples | wc -l)
     bcftools query -f '%CHROM\\n' !{vcf} >chromlong
 
-    head  chromlong -n 1 >chrom
-
-    CHROM=$(cat chrom)
-    # Ok, we need to remove some samples. tabix afterwards
-    # If there's nothing to remove, skip this time-consuming step.
-    if [ "$REMOVE_COUNT" != "0" ]; then
-        bcftools view --threads !{task.cpus} -S keep-samples !{vcf} -o $CHROM.ap_prf.vcf.gz -O z
-        tabix $CHROM.ap_prf.vcf.gz
+    #head  chromlong -n 1 >chrom
+    unique_chrom=($(sort chromlong | uniq))
+    echo "${unique_chrom[@]}"
+    # Check the number of unique chromosomes
+    if [ "${#unique_chrom[@]}" -eq 1 ]; then
+        CHROM="${unique_chrom[0]}"
+        echo "Processing single chromosome: $CHROM"
+        # Ok, we need to remove some samples. tabix afterwards
+        # If there's nothing to remove, skip this time-consuming step.
+        if [ "$REMOVE_COUNT" != "0" ]; then
+            bcftools view --threads !{task.cpus} -S keep-samples !{vcf} -o $CHROM.ap_prf.vcf.gz -O z
+            tabix $CHROM.ap_prf.vcf.gz
+        else
+            ln -s !{vcf} $CHROM.ap_prf.vcf.gz
+            ln -s !{vcf}.tbi $CHROM.ap_prf.vcf.gz.tbi
+        fi
     else
-        ln -s !{vcf} $CHROM.ap_prf.vcf.gz
-        ln -s !{vcf}.tbi $CHROM.ap_prf.vcf.gz.tbi
+        # Multiple unique chrosomes
+        for CHROM in "${unique_chrom[@]}"; do
+            echo "$CHROM"
+            # Ok, we need to remove some samples. tabix afterwards
+            # If there's nothing to remove, just filter by cromosome
+            if [ "$REMOVE_COUNT" != "0" ]; then
+                bcftools view --threads !{task.cpus} -S keep-samples !{vcf} -r $CHROM -o $CHROM.ap_prf.vcf.gz -O z
+                tabix $CHROM.ap_prf.vcf.gz
+            else
+                bcftools view --threads !{task.cpus} !{vcf} -r $CHROM -o $CHROM.ap_prf.vcf.gz -O z
+                tabix $CHROM.ap_prf.vcf.gz
+            fi
+        done
     fi
 
     '''

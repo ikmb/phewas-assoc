@@ -92,7 +92,7 @@ process regenie_step1 {
 			$catcovars \
 			--phenoFile ${phenofile} \
 			--use-relative-path \
-			--bsize 1000 \
+			--bsize $params.regenie_bsize \
 			$TRAIT_ARGS \
 			$BUILT_ARGS \
 			--lowmem \
@@ -104,12 +104,12 @@ process regenie_step1 {
 			"""
 	} else {
 		"""
-		sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
+		sed 's/^chr//' ${bim.baseName}.bim  | sed 's/X:/23:/' >tmp.bim
 		ln -s ${bed} tmp.bed
 		ln -s ${fam} tmp.fam
 
 
-		sed 's/^chr//' ${params.regenie_step1_input}.bim >tmp_input.bim
+		sed 's/chr//' ${params.regenie_step1_input}.bim | sed 's/X:/23:/' >tmp_input.bim
 		ln -s ${params.regenie_step1_input}.bed tmp_input.bed
 		ln -s ${params.regenie_step1_input}.fam tmp_input.fam
 
@@ -124,7 +124,7 @@ process regenie_step1 {
 			$catcovars \
 			--phenoFile ${phenofile} \
 			--use-relative-path \
-			--bsize 1000 \
+			--bsize $params.regenie_bsize \
 			$TRAIT_ARGS \
 			$BUILT_ARGS \
 			--lowmem \
@@ -132,7 +132,8 @@ process regenie_step1 {
 			--lowmem-prefix tmp_rg \
 			${params.additional_regenie_parameter} \
 			--out fit_bin_out \
-			--gz
+			--gz \
+			--nauto ${params.autochroms}
 		"""
 	}
 }
@@ -168,7 +169,7 @@ process regenie_step2 {
 						(params.test == 'spa') ? '--spa' : ''
 
 		"""
-		sed 's/^chr//' ${bim.baseName}.bim >tmp.bim
+		sed 's/chr//' ${bim.baseName}.bim | sed 's/X:/23:/' >tmp.bim
 
 		ln -s ${bed} tmp.bed
 		ln -s ${fam} tmp.fam
@@ -181,7 +182,7 @@ process regenie_step2 {
 			--covarCol \$(cat ${covars_cols}) \
 			$catcovars \
 			--phenoFile ${phenofile} \
-			--bsize 1000 \
+			--bsize $params.regenie_bsize \
 			$TRAIT_ARGS \
 			$TEST_ARGS \
 			$BUILT_ARGS \
@@ -190,7 +191,8 @@ process regenie_step2 {
 			--pred ${predlist} \
 			--out ${outprefix} \
 			${params.additional_regenie_parameter} \
-			--gz
+			--gz \
+			--nauto ${params.autochroms}
 		"""
 }
 //#--covarCol PC{1:!{params.pca_dims}} \
