@@ -4,7 +4,7 @@ process gen_r2_list {
     tag "${params.collection_name}.${chrom}"
 
     input:
-        tuple path(vcf), path(tbi), val(chrom), val(filetype)
+        tuple path(vcf), path(tbi), val(chrom)
 
     output:
         path("r2-include.${chrom}")
@@ -28,9 +28,9 @@ process split_vcf_ranges {
 	label 'bcftools'
 	scratch params.scratch
     input:
-        tuple file(vcf), file(tbi), val(chrom), val(filetype)
+        tuple file(vcf), file(tbi), val(chrom)
     output:
-        tuple file(vcf), file(tbi), file(field), val(chrom), val(filetype), file("0*")
+        tuple file(vcf), file(tbi), file(field), val(chrom), file("0*")
 
     shell:
         '''
@@ -46,9 +46,9 @@ process bcftoolsfilter {
 	label 'bcftools'
 	scratch params.scratch
     input:
-        tuple file(vcf), file(tbi), val(chrom), val(filetype)
+        tuple file(vcf), file(tbi), val(chrom)
     output:
-        tuple file(outputname), file(outputname_tbi), val(chrom), val(filetype)
+        tuple file(outputname), file(outputname_tbi), val(chrom)
 
     script:
         def bcftoolfilter = params.additional_bcftools_arg ? "${params.additional_bcftools_arg}" : ""

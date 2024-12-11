@@ -132,7 +132,8 @@ process regenie_step1 {
 			--lowmem-prefix tmp_rg \
 			${params.additional_regenie_parameter} \
 			--out fit_bin_out \
-			--gz
+			--gz \
+			--nauto ${params.autochroms}
 		"""
 	}
 }
@@ -190,7 +191,8 @@ process regenie_step2 {
 			--pred ${predlist} \
 			--out ${outprefix} \
 			${params.additional_regenie_parameter} \
-			--gz
+			--gz \
+			--nauto ${params.autochroms}
 		"""
 }
 //#--covarCol PC{1:!{params.pca_dims}} \

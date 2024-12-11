@@ -27,6 +27,9 @@ include {	regenie_step1;
 			awk_regenie
 		} from '../modules/regenie.nf'
 
+include {	regenie_plot_manhattan
+			regenie_plot_qq } from '../modules/Rscripts.nf'
+
 include {	saige_step1;
 			saige_step2} from '../modules/saige.nf'
 
@@ -34,12 +37,12 @@ include { prune_python_helper } from '../modules/python2.nf'
 
 //function definitions
 def get_file_details(filename) {
-	def m = filename =~ /\/([^\/]+)(\.vcf\.gz|\.bgen)$/
+	def m = filename =~ /\/([^\/]+)(\.vcf\.gz|\.bgen|\.bcf)$/
 	return [ m[0][1], m[0][2] ]
 	}
 
 def get_chromosome_code(filename) {
-	def m = filename =~ /\/([^\/]+).ap_prf.vcf.gz$/
+	def m = filename =~ /\/([^\/]+).ap_prf.(\.vcf\.gz|\.vcf\.gz\.tbi)$/
 	return m[0][1]
 	}
 
@@ -76,16 +79,6 @@ def covars_columns() {
 workflow assoc{
 
 	main:
-		option_check()
-
-		//Covars channel, content are all covars columns (PC and params.more_covars_cols) as a single comma separated string 
-		ch_covars_cols = Channel.of( covars_columns() )
-
-		for_saige_imp = Channel.fromPath(params.input_imputed_glob, checkIfExists: true).map { it ->
-			def match = get_file_details(it)
-			[it, match[1]] }
-
-
 		//TODO: Check for sanity of phenofile or fam file regarding phenotypes
 		if(params.fam){
 			ch_fam_pheno = Channel.fromPath(params.fam, checkIfExists: true ).ifEmpty { exit 1, "Cannot find fam file"}
@@ -93,38 +86,72 @@ workflow assoc{
 			ch_fam_pheno = Channel.fromPath(params.phenofile, checkIfExists: true ).ifEmpty { exit 1, "Cannot find phenofile file, please specify at least one of '--phenofile' or '--fam' in your pipeline call"}
 		}
 
-		prefilter( option_check.out.readystate,
-					for_saige_imp,
-					ch_fam_pheno )
+		if(!params.plinkfiles){
+			option_check()
 
-		prefiltered_ch = prefilter.out.map { it -> [it[0], it[1], get_chromosome_code(it[0]), it[2]] }
+			//Covars channel, content are all covars columns (PC and params.more_covars_cols) as a single comma separated string 
+			ch_covars_cols = Channel.of( covars_columns() )
 
-		if(params.additional_bcftools_arg){
-			bcftoolsfilter( prefiltered_ch )
-			ch_mapped_prefilter = bcftoolsfilter.out
-		}else{
-			ch_mapped_prefilter = prefiltered_ch
-		}
+			for_saige_imp = Channel.fromPath(params.input_imputed_glob, checkIfExists: true)
+			//.map { it ->
+			//	def match = get_file_details(it)
+			//	[it, match[1]] }
 
-		gen_r2_list( ch_mapped_prefilter )
-
-		merge_r2( gen_r2_list.out.collect() )
-
-	//PLINK FILE CREATION
-		make_plink ( 	ch_mapped_prefilter,
+			//TODO: Can now split multi chrosome vcfs into one vcf per chromosome, but will likely crash should multiple input vcfs contain the same chrosome
+			prefilter( option_check.out.readystate,
+						for_saige_imp,
 						ch_fam_pheno )
 
-		merge_plink ( make_plink.out.collect() )
+			prefiltered_ch_flat = prefilter.out
+				.flatten() // Flatten the sorted list into individual tuples again
+				.map { filePath -> 
+					def file = filePath
+					def base = file.baseName.tokenize('.')[0] // Extract the index prefix (e.g., "1" from "1.vcf.gz")
+					return[base, file]
+				}
+				.branch{ chrom, filename ->
+					index: filename.name.contains('.vcf.gz.tbi')
+						return [chrom, filename]
+					vcf: true
+						return [chrom, filename]
+				}
 
+			prefiltered_ch = prefiltered_ch_flat.vcf //chrom, vcf
+								.join(prefiltered_ch_flat.index, by: 0) //chrom, vcf, tbi
+								.map{it -> return[it[1], it[2], it[0]]} //vcf, tbi, chrom
+
+			if(params.additional_bcftools_arg){
+				bcftoolsfilter( prefiltered_ch )
+				ch_mapped_prefilter = bcftoolsfilter.out
+			}else{
+				ch_mapped_prefilter = prefiltered_ch
+			}
+
+			gen_r2_list( ch_mapped_prefilter )
+
+			merge_r2( gen_r2_list.out.collect() )
+			ch_merge_r2 = merge_r2.out
+		//PLINK FILE CREATION
+			make_plink ( 	ch_mapped_prefilter,
+							ch_fam_pheno )
+
+			merge_plink ( make_plink.out.collect() )
+
+			ch_plink_files = merge_plink.out
+		}else{
+			//TODO: MAKE THIS WORK! merge_r2 needs to be added here
+			ch_plink_files =  Channel.fromFilePairs("${params.plinkfiles}"+'{.bed,.bim,.fam}',size: -1, flat: true)
+			ch_merge_r2 = Channel.from("$projectDir/assets/emptyfile", checkIfExists:true)
+		}
 
 	//PRUNING
 		// pruned output only needed when regenie is active or we perform pca
-		if(params.pca_dims !=0 || !params.disable_regenie){
+		if((params.pca_dims !=0 || ( !params.disable_regenie || !params.regenie_step1_input ) ) ){
 			//removed python part from the original prune process
-			prune_python_helper(merge_plink.out,
-								merge_r2.out )
-			prune(	merge_plink.out,
-					merge_r2.out,
+			prune_python_helper(ch_plink_files,
+								ch_merge_r2 )
+			prune(	ch_plink_files,
+					ch_merge_r2,
 					prune_python_helper.out )
 		}
 
@@ -198,10 +225,11 @@ workflow assoc{
 	//REGENIE
 	//TODO: Implement to remove missing phenotypes for each run separately:
 		if(!params.remove_missing_phenotypes){
-			ch_regenie_plink = merge_plink.out
+			ch_regenie_plink = ch_plink_files
 		}else{
-			ch_regenie_plink = merge_plink.out
+			ch_regenie_plink = ch_plink_files
 		}
+
 		if(!params.disable_regenie){
 			ch_regenie1_input = prune.out.combine(ch_covars).combine(ch_pheno)
 			//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
@@ -210,6 +238,11 @@ workflow assoc{
 			ch_regenie2_input = ch_regenie_plink.combine(regenie_step1.out)
 			regenie_step2( ch_regenie2_input )
 			awk_regenie( regenie_step2.out.sumstat )
+			if(params.plot_regenie){
+				regenie_plot_manhattan( awk_regenie.out )
+				regenie_plot_qq( awk_regenie.out )
+			}
+		
 		}
 
 		if(params.saige){
@@ -223,7 +256,7 @@ workflow assoc{
 
 		if(params.plink_assoc){
 			//extract_dosage( prefilter.out.map { it -> [it[0], it[1], get_chromosome_code(it[0]), it[2]] } )
-			//TODO: aktuell nur für fam, nicht für multiple phenotypes, benötigt noch einen prozess, der automatisiert neue fam files für jeden phenotype erstellt und besser zu plink2 wechseln
+			//TODO: aktuell nur für fam, nicht für multiple phenotypes, benötigt noch einen prozess, der automatisiert neue fam files für jeden phenotype erstellt
 			plink2_assoc( 	ch_pheno.combine( ch_mapped_prefilter ).combine( ch_covars ),
 							ch_fam_pheno )
 

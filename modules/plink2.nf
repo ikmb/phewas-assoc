@@ -39,7 +39,7 @@ process make_plink {
     tag "${params.collection_name}.$chrom"
 
     input:
-        tuple path(vcf), path(tbi), val(chrom), val(filetype)
+        tuple path(vcf), path(tbi), val(chrom)
         each path(fam)
 
     output:
@@ -47,6 +47,8 @@ process make_plink {
 
     script:
         def MEM=task.memory.toMega()-1000
+        def par_split = params.split_PAR ? "--split-par b${params.build}" : ""
+        def CHROMFILTER = (chrom == "X" || chrom == "Y" || chrom == (params.autochroms.toInteger() + 1) ) ? "" : "--chr ${chrom}" 
         if (params.fam) {  
             """
             # Generate double-id FAM
@@ -61,16 +63,16 @@ process make_plink {
                     --memory $MEM \
                     --max-alleles 2 \
                     --keep-nosex \
-                    --chr ${chrom} \
+                    $CHROMFILTER \
                     --allow-extra-chr \
                     --pheno new-fam \
                     --pheno-col-nums 4 \
                     --update-sex new-fam col-num=3 \
-                    --split-par "b${params.build}" \
                     --output-chr chrM \
+                    $par_split \
+                    --threads ${task.cpus} \
                     --make-bed \
                     --out ${params.collection_name}.${chrom}
-
             mv ${params.collection_name}.${chrom}.bim old_bim
 
             #this was gawk originally:
@@ -96,6 +98,7 @@ process make_plink {
                     --split-par "b${params.build}" \
                     --output-chr chrM \
                     --make-bed \
+                    --threads ${task.cpus} \
                     --out ${params.collection_name}.${chrom}
 
             mv ${params.collection_name}.${chrom}.bim old_bim
