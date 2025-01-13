@@ -6,9 +6,11 @@ args = commandArgs(trailingOnly=TRUE)
 
 fam <- read.table(args[1])
 colnames(fam) <- c("FID","IID","PAT","MAT","SEX","PHENO")
-covars <- read.table(args[2], header=T)
+if(args[2] != "."){
+  covars <- read.table(args[2], header=T)
+}
 #if(args[3] != ""){
-  covar_cols <- args[3] %>% strsplit(.,split=",") %>% unlist()
+covar_cols <- args[3] %>% strsplit(.,split=",") %>% unlist()
 #}else{
 #  covar_cols <- ""
 #}
