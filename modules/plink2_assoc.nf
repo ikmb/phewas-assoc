@@ -4,7 +4,7 @@ process plink2_assoc {
     label 'plink2'
 
     input:
-    tuple val(meta), path(phenofile), path(vcf), path(tbi), val(chrom), val(filetype), path(covars), path(covars_cols)
+    tuple val(meta), path(phenofile), path(vcf), path(tbi), val(chrom), path(covars), path(covars_cols)
     each path(fam)
 
     output:
