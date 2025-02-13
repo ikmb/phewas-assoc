@@ -69,6 +69,7 @@ process make_plink {
                     --pheno-col-nums 4 \
                     --update-sex new-fam col-num=3 \
                     --output-chr chrM \
+                    --vcf-half-call missing \
                     $par_split \
                     --threads ${task.cpus} \
                     --make-bed \
