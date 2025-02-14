@@ -1,5 +1,3 @@
-![](images/ikmb_bfx_logo.png)
-
 # IKMB Association Testing Pipeline for mGWAS and PheWAS
 
 ## Documentation 
