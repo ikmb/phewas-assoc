@@ -154,6 +154,16 @@ process merge_plink {
         fi
         #trying to remake the plink1.9 output with parameter --output-chr 26
         #remove CHR Y as regenie cannot handle it
+
+        plink2  --bfile !{params.collection_name}_tmp \
+                --make-pgen \
+                --sort-vars \
+                --out !{params.collection_name}
+            
+        plink2  --pfile !{params.collection_name} \
+                --make-bed \
+                --output-chr 26 \
+                --out !{params.collection_name}
     '''
 }
 // TODO: ADD "--sort-vars", needs a pgen output first, that needs then to be sorted and only then output with --make-bed
