@@ -925,7 +925,20 @@ def write_snps_autosomes_noLDRegions_noATandGC_noIndels(bim, outfile):
     while line:
 
         list = re.split("\s+", line)
-        chr  = int(list[0])
+        #chr  = int(list[0])
+        
+        # Handle special chromosomes
+        special_chromosomes = {'X':23, 'Y':24, 'PAR1':26, 'PAR2':27}
+        chr_str = list[0]
+        if chr_str in special_chromosomes:
+            chr = special_chromosomes[chr_str]
+        else:
+            try:
+                chr = int(chr_str)
+            except ValueError:
+                # Skip lines with invalid chromosome names
+                continue
+
         pos  = int(list[3])
         a1   = list[4].upper()
         a2   = list[5].upper()
