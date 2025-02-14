@@ -53,7 +53,7 @@ The following list covers all parameters that may be specified for the Associati
 | [ADVISED] | `--regenie_bsize` | [integer]  | Change in Regenie the size of the genotype blocks. Default: 1000 |           
 | [ADVISED] | `--build` | [integer] | Define the human genome build code. Valid numbers are 37 and 38. |
 | [ADVISED] | `--autochroms` | [integer] | Define the number of autosomal chromosomes for regenie. Default is 22 |
-| [ADVISED] | `--split_PAR` | | Split the PAR region from X and Y chromosome, if the input already contains separated PAR files, set it to false. Default: false |
+| [ADVISED] | `--split_PAR` | | Split the PAR region from X and Y chromosome, if the input already contains separated PAR files, set it to false. Default: false. **NOTE: PAR regions will currently removed from dataset.** |
 | [ADVISED] | `--collection_name` | [name] | Output filename prefix |
 | [ADVISED] | `--output` | [filepath]  | Output directory. Default: "output/assoc" |
 | [OPTIONAL] | `--more_covars` | [filepath] | Whitespace-separated list of covariates. Columnsheader "FID IID Covariate1 Covariate2". |
