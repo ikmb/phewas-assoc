@@ -52,13 +52,40 @@ process make_plink {
         if (params.fam) {  
             """
             # Generate double-id FAM
-            
-
             #this was gawk originally:
             awk '{\$3="0";\$4="0";if(\$1!="0") {\$2=\$1"_"\$2; \$1="0";} print \$0}' ${fam} >new-fam
             #awk '{if(\$1!="0") {\$1="0";} print \$0}' ${fam} >new-fam
 
-            plink2  --vcf ${vcf} \
+            if [ "${chrom}" == "X" ] || [ "${chrom}" == "Y" ]; then
+                plink2  --vcf ${vcf} \
+                    --const-fid 0 \
+                    --memory $MEM \
+                    --max-alleles 2 \
+                    --keep-nosex \
+                    $CHROMFILTER \
+                    --allow-extra-chr \
+                    --pheno new-fam \
+                    --pheno-col-nums 4 \
+                    --update-sex new-fam col-num=3 \
+                    --output-chr chrM \
+                    --vcf-half-call missing \
+                    $par_split \
+                    --threads ${task.cpus} \
+                    --make-bed \
+                    --out ${params.collection_name}.${chrom}_tmp
+
+                plink2  --bfile ${params.collection_name}.${chrom}_tmp \
+                        --make-pgen \
+                        --chr chr${chrom} \
+                        --sort-vars \
+                        --out ${params.collection_name}.${chrom}
+                    
+                plink2  --pfile ${params.collection_name}.${chrom} \
+                        --make-bed \
+                        --output-chr 26 \
+                        --out ${params.collection_name}.${chrom}
+            else
+                plink2  --vcf ${vcf} \
                     --const-fid 0 \
                     --memory $MEM \
                     --max-alleles 2 \
@@ -74,11 +101,17 @@ process make_plink {
                     --threads ${task.cpus} \
                     --make-bed \
                     --out ${params.collection_name}.${chrom}
+            fi
+
+
+            
             mv ${params.collection_name}.${chrom}.bim old_bim
 
             #this was gawk originally:
-            awk '\$1 !~ /^chr/ {\$1="chr"\$1} {\$2=\$1":"\$4":"\$6":"\$5; print}' <old_bim >${params.collection_name}.${chrom}.bim
+            #awk '\$1 !~ /^chr/ {\$1="chr"\$1} {\$2=\$1":"\$4":"\$6":"\$5; print}' <old_bim >${params.collection_name}.${chrom}.bim
             # Might need some "chr" prefixing here
+            awk '(\$1 ~ /^(chr)?PAR[12]\$/) { sub(/^chr/, "", \$1) } \$1 !~ /^chr/ && \$1 !~ /^PAR[12]\$/ { \$1="chr"\$1 } { \$2=\$1":"\$4":"\$6":"\$5; print }' <old_bim >${params.collection_name}.${chrom}.bim
+            
             """
         }else{
             """
@@ -97,6 +130,7 @@ process make_plink {
                     --pheno new-fam \
                     --pheno-col-nums 1 \
                     --split-par "b${params.build}" \
+                    --vcf-half-call missing \
                     --output-chr chrM \
                     --make-bed \
                     --threads ${task.cpus} \
@@ -105,7 +139,10 @@ process make_plink {
             mv ${params.collection_name}.${chrom}.bim old_bim
 
             #this was gawk originally:
-            awk '\$1 !~ /^chr/ {\$1="chr"\$1} {\$2=\$1":"\$4":"\$6":"\$5; print}' <old_bim >${params.collection_name}.${chrom}.bim
+            #awk '\$1 !~ /^chr/ {\$1="chr"\$1} {\$2=\$1":"\$4":"\$6":"\$5; print}' <old_bim >${params.collection_name}.${chrom}.bim
+            #awk '\$1 !~ /^chr/ && \$1 !~ /^PAR[12]\$/ { \$1="chr"\$1 } { \$2=\$1":"\$4":"\$6":"\$5; print }' <old_bim >${params.collection_name}.${chrom}.bim
+            awk '(\$1 ~ /^(chr)?PAR[12]\$/) { sub(/^chr/, "", \$1) } \$1 !~ /^chr/ && \$1 !~ /^PAR[12]\$/ { \$1="chr"\$1 } { \$2=\$1":"\$4":"\$6":"\$5; print }' <old_bim >${params.collection_name}.${chrom}.bim
+
             # Might need some "chr" prefixing here
             """
         }
