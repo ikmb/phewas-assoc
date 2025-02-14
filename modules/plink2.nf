@@ -130,16 +130,28 @@ process merge_plink {
 		MEM=!{task.memory.toMega()-1000}
 		FIRSTNAME=$(ls *.bed | xargs -i -- basename {} .bed | tail -n +1 | head -n 1)
         
-        plink2  --bfile $FIRSTNAME \
-                --threads !{task.cpus} \
-                --memory $MEM \
-                --pmerge-list merge-list bfile \
-                --make-bed \
-                --keep-nosex \
-                --indiv-sort none \
-                --output-chr 26 \
-                --chr 1-25, X, MT, par1, par2 \
-                --out !{params.collection_name}
+        if [ -s "merge-list" ]; then
+            plink2  --bfile $FIRSTNAME \
+                    --threads !{task.cpus} \
+                    --memory $MEM \
+                    --pmerge-list merge-list bfile \
+                    --make-bed \
+                    --keep-nosex \
+                    --indiv-sort none \
+                    --output-chr 26 \
+                    --chr 1-25, X, MT, par1, par2 \
+                    --out !{params.collection_name}_tmp
+        else
+            plink2  --bfile $FIRSTNAME \
+                    --threads !{task.cpus} \
+                    --memory $MEM \
+                    --make-bed \
+                    --keep-nosex \
+                    --indiv-sort none \
+                    --output-chr 26 \
+                    --chr 1-25, X, MT, par1, par2 \
+                    --out !{params.collection_name}_tmp
+        fi
         #trying to remake the plink1.9 output with parameter --output-chr 26
         #remove CHR Y as regenie cannot handle it
     '''
