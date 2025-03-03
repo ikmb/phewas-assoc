@@ -19,7 +19,7 @@
 3. Run the phewas-assoc pipeline with like so:
    ```
    nextflow run ikmb/phewas-assoc \
-    --input_imputed_glob "/pathto/gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz'" \
+    --input_imputed_glob "/pathto/gwas-qc/example/output/Example/QCed/"'*.noATCG.vcf.gz' \
     --fam "/pathto/gwas-qc/example/output/Example/SNPQCII/Example_QCed.fam" \
     --collection_name "EXAMPLE" \
     --output "output/Example/Assoc"
