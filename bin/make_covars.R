@@ -1,8 +1,6 @@
 library(dplyr)
 
 args = commandArgs(trailingOnly=TRUE)
-#FAM, COVARS, COVARS_COLS, PCS, PC_DIMS, WITHCOVARS, !{params.collection_name}
-#args <- c("antiTNF_QCed_VCF_noATCG.fam", "antiTNF.covars", "antiTNF.covar_cols", "pcs.txt", 0, TRUE, "antiTNF")
 
 fam <- read.table(args[1])
 colnames(fam) <- c("FID","IID","PAT","MAT","SEX","PHENO")
