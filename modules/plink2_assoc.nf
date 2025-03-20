@@ -29,6 +29,7 @@ process plink2_assoc {
             --update-sex new-fam \
             --out ${output_name} \
             --chr ${chrom} \
+            --vcf-half-call missing \
             --allow-extra-chr \
             $glmoptions \
             --pheno-name ${phenotype} \
