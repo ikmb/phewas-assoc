@@ -2,6 +2,7 @@ process phenofile_from_fam {
 	tag "${params.collection_name}"
 	scratch params.scratch
 	label 'base'
+	label 'short_run'
 
 	input:
 		val(readystate)
@@ -22,6 +23,7 @@ process split_input_phenofile {
 	tag "${params.collection_name}"
 	scratch params.scratch
 	label 'base'
+	label 'short_run'
 
 	input:
 		val(readystate)
@@ -58,6 +60,7 @@ process regenie_step1 {
 	scratch params.scratch
 	label 'regenie'
 	cache 'lenient'
+	label 'very_long_run'
 
 	input:
 		tuple path(bed), path(bim), path(fam), path(logfile), path(covars), path(covars_cols), val(meta), path(phenofile)
@@ -143,6 +146,7 @@ process regenie_step2 {
 	scratch params.scratch
 	tag "${params.collection_name}_${phenofile.getSimpleName()}"
 	label 'regenie'
+	label 'very_long_run'
 	publishDir params.output, mode: 'copy'
 	cache 'lenient'
 
@@ -200,6 +204,7 @@ process awk_regenie {
 	tag "${regenie_sumstats.getSimpleName()}"
 	scratch params.scratch
 	label 'base'
+	label 'short_run'
 	publishDir params.output, mode: 'copy'
 	input:
 		path(regenie_sumstats)

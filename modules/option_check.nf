@@ -1,5 +1,6 @@
 process option_check {
 	label 'base'
+    label 'short_run'
 	scratch params.scratch
     errorStrategy 'terminate'
     input:

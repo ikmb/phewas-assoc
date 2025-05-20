@@ -31,7 +31,7 @@ if(!params.hasProperty('run_name')){
 log.info  "Run_name: '${params.run_name}'\n"
 
 //Import workflow
-include { assoc } from './workflows/Assoc' params(params)
+include { assoc } from './workflows/Assoc'
 
 //execute workflow
 workflow {

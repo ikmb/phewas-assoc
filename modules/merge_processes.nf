@@ -1,6 +1,7 @@
 process merge_plink_results {
     tag "${params.collection_name}"
 	label 'base'
+    label 'short_run'
 	scratch params.scratch
     publishDir params.output, mode: 'copy'
 
@@ -22,6 +23,7 @@ process merge_r2 {
     tag "${params.collection_name}"
 	scratch params.scratch
 	label 'base'
+    label 'short_run'
 
     input:
     path(r2)

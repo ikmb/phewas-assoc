@@ -1,6 +1,7 @@
 process generate_pcs {
     tag "${params.collection_name}"
     label 'flashpca2'
+    label 'long_run'
 	scratch params.scratch
 
 input:

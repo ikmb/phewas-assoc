@@ -2,6 +2,7 @@ process regenie_plot_manhattan {
 	tag "${regenie_sumstats.getSimpleName()}"
 	scratch params.scratch
 	label 'rplotting'
+	label 'short_run'
 	publishDir params.output, mode: 'copy'
 	input:
 		path(regenie_sumstats)
@@ -17,6 +18,7 @@ process regenie_plot_qq {
 	tag "${regenie_sumstats.getSimpleName()}"
 	scratch params.scratch
 	label 'rplotting'
+	label 'short_run'
 	publishDir params.output, mode: 'copy'
 	input:
 		path(regenie_sumstats)

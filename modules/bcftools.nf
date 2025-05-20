@@ -1,5 +1,6 @@
 process gen_r2_list {
 	label 'bcftools'
+    label 'short_run'
 	scratch params.scratch
     tag "${params.collection_name}.${chrom}"
 
@@ -26,6 +27,7 @@ process gen_r2_list {
 process split_vcf_ranges {
     tag "${params.collection_name}.${chrom}"
 	label 'bcftools'
+    label 'short_run'
 	scratch params.scratch
     input:
         tuple file(vcf), file(tbi), val(chrom)
@@ -44,6 +46,7 @@ process split_vcf_ranges {
 process bcftoolsfilter {
     tag "${params.collection_name}.${chrom}"
 	label 'bcftools'
+    label 'short_run'
 	scratch params.scratch
     input:
         tuple file(vcf), file(tbi), val(chrom)

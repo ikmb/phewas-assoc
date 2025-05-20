@@ -2,6 +2,7 @@ process plink2_assoc {
     tag "${params.collection_name}_${phenotype}_${chrom}"
 	scratch params.scratch
     label 'plink2'
+    label 'long_run'
 
     input:
     tuple val(meta), path(phenofile), path(vcf), path(tbi), val(chrom), path(covars), path(covars_cols)
@@ -45,6 +46,7 @@ process plink2_assoc_merge {
     tag "${params.collection_name}_${phenotype}"
 	scratch params.scratch
     label 'base'
+    label 'short_run'
     publishDir params.output, mode: 'copy'
     
     input:

@@ -2,6 +2,7 @@ process saige_step1 {
 	tag "${params.collection_name}_${phenoflag}"
 	scratch params.scratch
 	label 'saige'
+	label 'very_long_run'
 	cache 'lenient'
 
 	input:
@@ -59,6 +60,7 @@ process saige_step2 {
 	scratch params.scratch
 	tag "${params.collection_name}_${phenoflag}"
 	label 'saige'
+	label 'very_long_run'
 	publishDir params.output, mode: 'copy'
 	cache 'lenient'
 

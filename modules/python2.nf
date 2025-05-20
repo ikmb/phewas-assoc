@@ -1,6 +1,7 @@
 process prune_python_helper {
 	tag "${params.collection_name}"
     label 'python2'
+    label 'short_run'
     scratch params.scratch
 
 	input:

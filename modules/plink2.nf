@@ -1,6 +1,7 @@
 process prune {
 
     label 'plink2'
+    label 'long_run'
 	scratch params.scratch
     publishDir params.output, mode: 'copy'
 
@@ -34,6 +35,7 @@ process prune {
 
 process make_plink {
     label "plink2"
+    label 'long_run'
 
     scratch params.scratch
     tag "${params.collection_name}.$chrom"
@@ -153,6 +155,7 @@ process merge_plink {
 	scratch params.scratch
     publishDir params.output, mode: 'copy'
     label 'plink2'
+    label 'long_run'
 
     input:
     file(filelist)

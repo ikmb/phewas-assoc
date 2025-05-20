@@ -3,7 +3,7 @@ process extract_dosage {
     tag "${params.collection_name}.${chrom}"
 
     label 'extract_dosage'
-
+    label 'long_run'
     input:
     tuple file (gz), file(tbi), val(chrom)
 

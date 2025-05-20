@@ -1,6 +1,7 @@
 process plink_assoc {
     tag "${params.collection_name}.${chrom}"
     label 'plink'
+    label 'long_run'
     scratch params.scratch
     input:
     tuple file(dosagemap), file(dosage), val(chrom)

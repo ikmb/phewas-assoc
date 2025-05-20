@@ -7,6 +7,7 @@
 process prefilter {
     tag "${params.collection_name}"
     label "prefilter"
+    label 'long_run'
 	scratch params.scratch
 
     input:

@@ -2,6 +2,7 @@ process make_covars {
 	scratch params.scratch
     publishDir params.output, mode: 'copy'
 	label 'tidyverse'
+    label 'short_run'
     input:
 
         path(evec)
@@ -21,6 +22,7 @@ process make_covars_nopca {
 	scratch params.scratch
     publishDir params.output, mode: 'copy'
 	label 'tidyverse'
+    label 'short_run'
     input:
         val(readystate)
         path(inc_fam)
