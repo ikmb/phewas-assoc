@@ -213,6 +213,19 @@ process awk_regenie {
 	shell:
 		regenie_newname = regenie_sumstats.getSimpleName() + '_plainpvalue.regenie.gz'
 		'''
-		zcat !{regenie_sumstats} | gawk 'NR==1{$14="p.value"; $4="ALLELE1"; $5="ALLELE2"; $6="A2FREQ"; print $0}NR>1{$14=10**-$12; print $0}' |  gawk 'NR>1 {if($14>1) next} 1' | gzip > !{regenie_newname}
+		zcat !{regenie_sumstats} | gawk '
+        /^#/ {next}                		  # skip potential comment lines
+        !hdr {                            # first non-comment line is the true header
+              $4  = "ALLELE1"
+              $5  = "ALLELE2"
+              $6  = "A2FREQ"
+              $14 = "P"                   # name new plain P-value column
+              print                       # output header once
+              hdr = 1; next               # mark that the header was handled
+        }
+        {                                 # data lines
+              $14 = 10^(-$12)             # compute P-value
+              if ($14 <= 1) print         # keep only sensible values
+        }'
 		'''
 }
