@@ -1,5 +1,6 @@
 process phenofile_from_fam {
 	tag "${params.collection_name}"
+	publishDir params.output, mode: 'copy'
 	scratch params.scratch
 	label 'base'
 	label 'short_run'
@@ -21,6 +22,7 @@ process phenofile_from_fam {
 
 process split_input_phenofile {
 	tag "${params.collection_name}"
+	publishDir params.output, mode: 'copy'
 	scratch params.scratch
 	label 'base'
 	label 'short_run'
@@ -66,7 +68,6 @@ process regenie_step1 {
 		tuple path(bed), path(bim), path(fam), path(logfile), path(covars), path(covars_cols), val(meta), path(phenofile)
 	output:
 		tuple path('fit_bin_out_*.loco*'), path('fit_bin_out_pred.list'), path(covars), path(covars_cols), val(meta), path(phenofile)
-
 	when: meta.valid
 	script:
 	def step1input = params.regenie_step1_input ? "${params.regenie_step1_input}" : "tmp"
