@@ -8,4 +8,5 @@ dependencies:
   - r-data.table
   - r-ggrepel
   - r-r.utils
+  - r-svglite
   - procps-ng

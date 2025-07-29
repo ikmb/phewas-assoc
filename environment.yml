@@ -5,7 +5,6 @@ channels:
   - biobakery
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - gawk
   - mawk
