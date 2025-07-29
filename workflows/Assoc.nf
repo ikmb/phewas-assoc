@@ -27,8 +27,7 @@ include {	regenie_step1;
 			awk_regenie
 		} from '../modules/regenie.nf'
 
-include {	regenie_plot_manhattan
-			regenie_plot_qq } from '../modules/Rscripts.nf'
+include {	plot_manhattan_qq } from '../modules/Rscripts.nf'
 
 include {	saige_step1;
 			saige_step2} from '../modules/saige.nf'
@@ -136,7 +135,7 @@ workflow assoc{
 							ch_fam_pheno )
 
 			merge_plink ( make_plink.out.collect() )
-
+			//TODO: Also create psam/pgen format files for assoc with multiallelic variants
 			ch_plink_files = merge_plink.out
 		}else{
 			//TODO: MAKE THIS WORK! merge_r2 needs to be added here
@@ -146,7 +145,7 @@ workflow assoc{
 
 	//PRUNING
 		// pruned output only needed when regenie is active or we perform pca
-		if((params.pca_dims !=0 || ( !params.disable_regenie || !params.regenie_step1_input ) ) ){
+		if((params.pca_dims !=0 || ( !params.disable_regenie || !params.regenie_step1_input || params.saige ) ) ){
 			//removed python part from the original prune process
 			prune_python_helper(ch_plink_files,
 								ch_merge_r2 )
@@ -221,7 +220,8 @@ workflow assoc{
 					}
 			}
 		}
-
+		// Channel containing all summary statistics: 'assoc_tool', 'sumstats'
+		ch_sumstats = Channel.empty()
 	//REGENIE
 	//TODO: Implement to remove missing phenotypes for each run separately:
 		if(!params.remove_missing_phenotypes){
@@ -238,22 +238,22 @@ workflow assoc{
 			ch_regenie2_input = ch_regenie_plink.combine(regenie_step1.out)
 			regenie_step2( ch_regenie2_input )
 			awk_regenie( regenie_step2.out.sumstat )
-			if(params.plot_regenie){
-				regenie_plot_manhattan( awk_regenie.out )
-				regenie_plot_qq( awk_regenie.out )
-			}
+
+			ch_sumstats = ch_sumstats.mix(awk_regenie.out.sumstat)
 		
 		}
-
+	//SAIGE
 		if(params.saige){
-			ch_saige1_input = ch_regenie_plink.combine(ch_covars).combine(ch_pheno)
+			ch_saige1_input = prune.out.combine(ch_covars).combine(ch_pheno)
 			//Regenie step1 should be run with less than 1mio SNPs, therefor we use the pruned plink-files
 			saige_step1( ch_saige1_input )
-
-			ch_saige2_input = saige_step1.out
+	
+			ch_saige2_input = saige_step1.out.combine(ch_regenie_plink)
 			saige_step2( ch_saige2_input )
-		}
 
+			ch_sumstats = ch_sumstats.mix(saige_step2.out.sumstat)
+		}
+	// PLINK2 ASSOC
 		if(params.plink_assoc){
 			//extract_dosage( prefilter.out.map { it -> [it[0], it[1], get_chromosome_code(it[0]), it[2]] } )
 			//TODO: aktuell nur für fam, nicht für multiple phenotypes, benötigt noch einen prozess, der automatisiert neue fam files für jeden phenotype erstellt
@@ -261,9 +261,13 @@ workflow assoc{
 							ch_fam_pheno )
 
 			plink2_assoc_merge( plink2_assoc.out.plinksumstats.groupTuple() )
+
+			ch_sumstats = ch_sumstats.mix(plink2_assoc_merge.out.sumstat)
 		}
-
-
+	// PLOT SUMSTATS
+		if(params.plot_manhattan){
+			plot_manhattan_qq( ch_sumstats )
+		}
 
 }
 //TODO: Implement a process to munge the sumstats for possible pheweb import

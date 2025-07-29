@@ -209,7 +209,7 @@ process awk_regenie {
 	input:
 		path(regenie_sumstats)
 	output:
-		path(regenie_newname)
+		tuple val('regenie'), path(regenie_newname), emit: sumstat
 	shell:
 		regenie_newname = regenie_sumstats.getSimpleName() + '_plainpvalue.regenie.gz'
 		'''
@@ -226,6 +226,6 @@ process awk_regenie {
         {                                 # data lines
               $14 = 10^(-$12)             # compute P-value
               if ($14 <= 1) print         # keep only sensible values
-        }'
+        }'| gzip > !{regenie_newname}
 		'''
 }

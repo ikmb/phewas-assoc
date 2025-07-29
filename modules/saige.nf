@@ -1,8 +1,9 @@
 process saige_step1 {
 	tag "${params.collection_name}_${phenoflag}"
 	scratch params.scratch
+	publishDir params.output, mode: 'copy'
 	label 'saige'
-	label 'very_long_run'
+	label 'long_run'
 	cache 'lenient'
 
 	input:
@@ -65,14 +66,14 @@ process saige_step2 {
 	cache 'lenient'
 
 	input:
-		tuple val(phenoflag), val(meta), path(bed), path(bim), path(fam), path(saigeoutput), path(saigevariance), path(grm_matrix), path(grm_sampleid)
+		tuple val(phenoflag), val(meta), path(pruned_bed), path(pruned_bim), path(pruned_fam), path(saigeoutput), path(saigevariance), path(grm_matrix), path(grm_sampleid), path(bed), path(bim), path(fam), path(logfile)
 	output:
-		path(outprefix)
+		tuple val('saige'), path(outprefix), emit: sumstat
 	when: meta.valid
 	shell:
 		outprefix = params.collection_name + '_' + phenoflag + '_saige.txt'// + params.test
 		def raretestoption = params.saige_test_rare ? "---minMAF=0 --minMAC=0.5 --cateVarRatioMaxMACVecInclude=10.5,20.5,30.5 --cateVarRatioMinMACVecExclude=5.5,10.5,20.5" : "--minMAF=0 --minMAC=1"
-
+		def saige_step2_option = params.saige_step2_options!="" ? "${params.saige_step2_options}" : ""
 		"""
 		#step2
 		Rscript /usr/local/bin/step2_SPAtests.R \
@@ -88,6 +89,7 @@ process saige_step2 {
 			--LOCO=FALSE \
 			--sparseGRMFile=$grm_matrix \
 			--sparseGRMSampleIDFile=$grm_sampleid \
-			$raretestoption
+			$raretestoption \
+			$saige_step2_option
 		"""
 }
