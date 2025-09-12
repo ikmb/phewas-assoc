@@ -24,8 +24,23 @@ process prefilter {
     # Gather lists of samples with proper double-ID handling
     bcftools query -l !{vcf} | sort >vcf-samples
 
-    #TODO: the line below needs a rewriting to also include samples that have no family id if others have them, or we gonna loose them in later analysis or error out
-    gawk '{if($1!="0") {$2=$1"_"$2; $1="0";} print $2}' !{inc_fam} | sort >fam-samples
+    # If ANY sample has a nonzero FID, print FID_IID for those,
+    # and "0_IID" for samples with missing FID. If NONE have FIDs,
+    # just print IID).
+    gawk '
+        BEGIN { FS=OFS=" " }
+        { row[NR]=$0; if ($1!="0") anyFID=1 }
+        END {
+            for (i=1; i<=NR; i++) {
+                split(row[i], f)
+                if (f[1]!="0") {
+                    print f[1] "_" f[2]
+                } else {
+                    if (anyFID) print "0_" f[2]; else print f[2]
+                }
+            }
+        }       
+        ' !{inc_fam} | sort >fam-samples
     #gawk '{ {$2=$1"_"$2; $1="0";} print $2}' !{inc_fam} | sort >fam-samples
 
     # Keep only those samples that are in VCF and in FAM file

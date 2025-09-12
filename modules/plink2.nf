@@ -55,7 +55,21 @@ process make_plink {
             """
             # Generate double-id FAM
             #this was gawk originally:
-            awk '{\$3="0";\$4="0";if(\$1!="0") {\$2=\$1"_"\$2; \$1="0";} print \$0}' ${fam} >new-fam
+            awk '
+                BEGIN { FS=OFS=" " }
+                { buf[NR]=\$0; if (\$1!="0") anyFID=1 }
+                END {
+                    for (i=1; i<=NR; i++) {
+                    split(buf[i], f)
+                    fid=f[1]; iid=f[2]
+                    newiid = anyFID ? (fid!="0" ? fid"_"iid : "0_"iid) : iid
+                    f[1]="0"; f[2]=newiid
+                    # ensure 6 fields exist: PID, MID, SEX, PHENO
+                    for (k=3; k<=6; k++) if (f[k]=="") f[k]=(k<6 ? "0" : "-9")
+                    print f[1], f[2], f[5], f[6]
+                    }
+                }' ${fam} >new-fam
+            #awk '{\$3="0";\$4="0";if(\$1!="0") {\$2=\$1"_"\$2; \$1="0";} print \$0}' ${fam} >new-fam
             #awk '{if(\$1!="0") {\$1="0";} print \$0}' ${fam} >new-fam
 
             if [ "${chrom}" == "X" ] || [ "${chrom}" == "Y" ]; then
@@ -63,7 +77,6 @@ process make_plink {
                     --const-fid 0 \
                     --memory $MEM \
                     --max-alleles 2 \
-                    --keep-nosex \
                     $CHROMFILTER \
                     --allow-extra-chr \
                     --pheno new-fam \
@@ -91,7 +104,6 @@ process make_plink {
                     --const-fid 0 \
                     --memory $MEM \
                     --max-alleles 2 \
-                    --keep-nosex \
                     $CHROMFILTER \
                     --allow-extra-chr \
                     --pheno new-fam \
@@ -126,7 +138,6 @@ process make_plink {
                     --const-fid 0 \
                     --memory $MEM \
                     --max-alleles 2 \
-                    --keep-nosex \
                     --chr ${chrom} \
                     --allow-extra-chr \
                     --pheno new-fam \
@@ -176,7 +187,6 @@ process merge_plink {
                     --memory $MEM \
                     --pmerge-list merge-list bfile \
                     --make-bed \
-                    --keep-nosex \
                     --indiv-sort none \
                     --output-chr 26 \
                     --chr 1-25, X, MT, par1, par2 \
@@ -186,7 +196,6 @@ process merge_plink {
                     --threads !{task.cpus} \
                     --memory $MEM \
                     --make-bed \
-                    --keep-nosex \
                     --indiv-sort none \
                     --output-chr 26 \
                     --chr 1-25, X, MT, par1, par2 \
