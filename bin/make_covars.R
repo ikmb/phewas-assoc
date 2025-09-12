@@ -36,13 +36,18 @@ if(withcovars){
   fam_pcs_covars <- fam_pcs
 }
 
-
 #covar_cols; a text line with all used column names comma separated
-write(colnames(fam_pcs_covars)[c(-1,-2)], 
-      sep = ",", 
-      file = paste0(collection_name, ".covar_cols"), 
-      ncolumns=length(colnames(fam_pcs_covars)[c(-1,-2)])
+if(pc_cols!=""){
+  write(colnames(fam_pcs_covars)[c(-1,-2)], 
+        sep = ",", 
+        file = paste0(collection_name, ".covar_cols"), 
+        ncolumns=length(colnames(fam_pcs_covars)[c(-1,-2)])
+        )
+}else{
+  cat(NULL, 
+      file = paste0(collection_name, ".covar_cols")
       )
+}
 #covars; a tab separated table with FID, IID and all used covariate columns, in the same order as the input fam file.
 write.table(fam_pcs_covars, 
             sep="\t", 
