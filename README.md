@@ -14,9 +14,8 @@
 
 This repository builds on and extends scripts previously released by our group in the BIGwas/gwas-assoc framework. The original software was published in:
 
-Kässens JC, Wienbrandt L, Ellinghaus D. BIGwas: Single-command quality control
-and association testing for multi-cohort and biobank-scale GWAS/PheWAS data.
-Gigascience. 2021 Jun 29;10(6):giab047.
+>Kässens JC, Wienbrandt L, Ellinghaus D. BIGwas: Single-command quality control and association testing for multi-cohort and biobank-scale GWAS/PheWAS data. Gigascience. 2021 Jun 29;10(6):giab047. DOI: [10.1093/gigascience/giab047](https://doi.org/10.1093/gigascience/giab047)
+
 
 If you use this repository in published work, please cite the BIGwas methods paper above. 
 Please also retain the original copyright and license notices, in accordance with the MIT License.             
